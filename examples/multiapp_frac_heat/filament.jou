@@ -1,0 +1,104 @@
+reset
+
+create vertex -.5 .1003 0 
+create vertex -.5 .0003 0 
+create vertex -.5 -.0003 0 
+create vertex -.5 -.1003 0 
+
+create vertex -.3 .1003 0 
+create vertex -.3 .0003 0 
+create vertex -.3 -.0003 0 
+create vertex -.3 -.1003 0 
+
+create vertex .3 .1003 0 
+create vertex .3 .0003 0 
+create vertex .3 -.0003 0 
+create vertex .3 -.1003 0 
+
+create vertex .5 .1003 0 
+create vertex .5 .0003 0 
+create vertex .5 -.0003 0 
+create vertex .5 -.1003 0 
+
+create curve vertex 1 2
+create curve vertex 2 3
+create curve vertex 3 4
+
+create curve vertex 5 6
+create curve vertex 6 7
+create curve vertex 7 8
+
+create curve vertex 9 10
+create curve vertex 10 11
+create curve vertex 11 12
+
+create curve vertex 13 14
+create curve vertex 14 15
+create curve vertex 15 16
+
+create curve vertex 1 5
+create curve vertex 5 9
+create curve vertex 9 13
+
+create curve vertex 2 6
+create curve vertex 6 10
+create curve vertex 10 14
+
+create curve vertex 3 7
+create curve vertex 7 11
+create curve vertex 11 15
+
+create curve vertex 4 8
+create curve vertex 8 12
+create curve vertex 12 16
+
+create surface curve 1 13 4 16 
+create surface curve 2 16 5 19 
+create surface curve 3 19 6 22
+create surface curve 4 14 7 17
+create surface curve 17 8 20 5
+create surface curve 6 20 9 23
+create surface curve 7 15 10 18
+create surface curve 18 11 21 8
+create surface curve 21 12 24 9
+
+merge all
+
+curve 17 20 size .0006
+curve 4 scheme bias fine size .0006 factor 1.1 start vertex 6 
+curve 6 scheme bias fine size .0006 factor 1.1 start vertex 7
+curve 18 scheme bias fine size .0006 factor 1.1 start vertex 10
+curve 9 scheme bias fine size .0006 factor 1.1 start vertex 11
+curve 7 scheme bias fine size .0006 factor 1.1 start vertex 10
+curve 21 scheme bias fine size .0006 factor 1.1 start vertex 11
+curve 15 scheme bias fine size .0006 factor 1.1 start vertex 9
+curve 24 scheme bias fine size .0006 factor 1.1 start vertex 12
+curve 10 scheme bias fine size .0006 factor 1.1 start vertex 14
+curve 12 scheme bias fine size .0006 factor 1.1 start vertex 15
+curve 3 scheme bias fine size .0006 factor 1.1 start vertex 3
+curve 1 scheme bias fine size .0006 factor 1.1 start vertex 2
+
+curve 16 scheme bias fine size .0006 factor 1.05 start vertex 6 
+curve 19 scheme bias fine size .0006 factor 1.05 start vertex 7
+curve 22 scheme bias fine size .0006 factor 1.05 start vertex 8
+curve 13 scheme bias fine size .0006 factor 1.05 start vertex 5
+
+mesh surface 5 2 8
+mesh surface all
+
+block 1 add surface 5 
+block 1 name 'fracture'
+block 2 add surface 1 2 3 4 6 7 8 9 
+block 2 name 'matrix'
+
+Sideset 1 add curve 1 2 3 
+Sideset 1 name 'left'
+Sideset 3 add curve 2
+Sideset 3 name 'mid_left'
+Sideset 2 add curve 10 11 12 
+Sideset 2 name 'right'
+
+set exodus netcdf4 off
+set large exodus off
+export mesh "/Users/mundlb/projects/multiappfracflow/lynn/fine_thick/multiapp_heat/filament.e" dimension 2 overwrite
+
