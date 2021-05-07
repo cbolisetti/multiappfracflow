@@ -1,7 +1,7 @@
 [Mesh]
   [fileRead]
     type = FileMeshGenerator
-    file = 'filament.e'
+    file = '../filament.e'
   []
 []
 
@@ -33,17 +33,35 @@
   []
 []
 
+[AuxVariables]
+  [frac_T]
+    order = FIRST
+    family=LAGRANGE
+  []
+  [main_matrix_res]
+    order = FIRST
+    family=LAGRANGE
+  []
+[]
+
 [MultiApps]
   [sub]
     type = TransientMultiApp
-    input_files = heat_sub.i
-    execute_on = TIMESTEP_END
+    input_files = ../heat_sub.i
+    execute_on = TIMESTEP_BEGIN
     # sub_cycling = true
     # interpolate_transfers = true
   []
 []
 
 [Transfers]
+  [T_from_sub]
+    type = MultiAppMeshFunctionTransfer
+    direction = from_multiapp
+    multi_app = sub
+    source_variable = T
+    variable = frac_T
+  []
   [T_to_sub]
     type = MultiAppMeshFunctionTransfer
     direction = to_multiapp
@@ -62,6 +80,12 @@
     type = AnisotropicDiffusion
     tensor_coeff = '1e-3 0 0  0 1e-3 0  0 0 1e-3'
     variable = T
+  []
+  [fromFrac]
+    type = PorousFlowHeatMassTransfer
+    variable = T
+    v = frac_T
+    transfer_coefficient = -0.1
   []
 []
 
@@ -93,19 +117,19 @@
 # []
 
 [Outputs]
-  file_base = 'main_fracOnly'
+  file_base = 'main_begin'
   perf_graph = true
   console = true
   exodus = true
   #csv = true
   # [csv]
   #   type= CSV
-  #   sync_times = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20'
+  #   sync_times = '.1 .2 .3 .4 .5 .6 .7 .8 .9 1 2 3 4 5 6 7 8 9 10'
   #   sync_only = true
   # []
   # [exodus]
   #   type= Exodus
-  #   sync_times = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20'
+  #   sync_times = '.1 .2 .3 .4 .5 .6 .7 .8 .9 1 2 3 4 5 6 7 8 9 10'
   #   sync_only = true
   # []
 []

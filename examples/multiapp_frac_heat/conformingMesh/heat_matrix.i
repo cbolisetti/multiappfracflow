@@ -1,7 +1,7 @@
 [Mesh]
   [fileRead]
     type = FileMeshGenerator
-    file = 'filament.e'
+    file = '../filament.e'
   []
 []
 

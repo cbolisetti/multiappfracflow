@@ -1,7 +1,7 @@
 [Mesh]
   [fileRead]
     type = FileMeshGenerator
-    file = 'filament.e'
+    file = 'fracture_1d.e'
   []
 []
 
@@ -10,64 +10,31 @@
   []
 []
 
-[Functions]
-  [linear]
-    type = PiecewiseLinear
-    x = '0 100 300 1000'
-    y = '0 1 1 1'
-  []
-[]
-
-[BCs]
-  [left]
-    type = FunctionDirichletBC
-    boundary = 'mid_left'
-    variable = T
-    function = linear
-  []
-  [right]
-    type = DirichletBC
-    boundary = 'right'
-    variable = T
-    value = 0
-  []
-[]
-
 [AuxVariables]
-  [frac_T]
+  [matrix_T]
     order = FIRST
     family=LAGRANGE
   []
-  [main_matrix_res]
+  [sub_frac_res]
+    order = FIRST
+    family=LAGRANGE
+  []
+  [sub_matrix_res]
+    order = FIRST
+    family=LAGRANGE
+  []
+  [neg_sub_matrix_res]
     order = FIRST
     family=LAGRANGE
   []
 []
 
-[MultiApps]
-  [sub]
-    type = TransientMultiApp
-    input_files = heat_sub.i
-    execute_on = TIMESTEP_END
-    # sub_cycling = true
-    # interpolate_transfers = true
-  []
-[]
-
-[Transfers]
-  [T_from_sub]
-    type = MultiAppMeshFunctionTransfer
-    direction = from_multiapp
-    multi_app = sub
-    source_variable = T
-    variable = frac_T
-  []
-  [T_to_sub]
-    type = MultiAppMeshFunctionTransfer
-    direction = to_multiapp
-    multi_app = sub
-    source_variable = T
-    variable = matrix_T
+[AuxKernels]
+  [fluxOutFromMainApp]
+    type = ParsedAux
+    args = 'sub_matrix_res'
+    variable = neg_sub_matrix_res
+    function = '-1*sub_matrix_res'
   []
 []
 
@@ -78,14 +45,23 @@
   []
   [fracture_diffusion]
     type = AnisotropicDiffusion
-    tensor_coeff = '1e-3 0 0  0 1e-3 0  0 0 1e-3'
+    tensor_coeff = '2 0 0  0 2 0  0 0 2'
     variable = T
   []
-  [fromFrac]
+  [fromMatrix]
     type = PorousFlowHeatMassTransfer
     variable = T
-    v = frac_T
-    transfer_coefficient = -.1
+    v = matrix_T
+    transfer_coefficient = 2 # anisotropicDiffusion/distance between nodes?
+    save_in = sub_frac_res
+  []
+  # this would remove the flux passed to the main app in PorousFlowHeatMassTransfer
+  # but that would only work in the picard NumPicardIterations
+  # as it is now, the subapp
+  [residual]
+    type = CoupledForce
+    variable = T
+    v = neg_sub_matrix_res
   []
 []
 
@@ -105,6 +81,7 @@
   nl_abs_tol = 1E-7
 []
 
+
 # [VectorPostprocessors]
 #   [xmass]
 #     type = LineValueSampler
@@ -117,11 +94,10 @@
 # []
 
 [Outputs]
-  file_base = 'main_end'
+  file_base = 'sub1d'
   perf_graph = true
   console = true
   exodus = true
-  #csv = true
   # [csv]
   #   type= CSV
   #   sync_times = '.1 .2 .3 .4 .5 .6 .7 .8 .9 1 2 3 4 5 6 7 8 9 10'

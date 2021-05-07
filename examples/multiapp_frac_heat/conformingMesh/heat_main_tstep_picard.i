@@ -1,7 +1,7 @@
 [Mesh]
   [fileRead]
     type = FileMeshGenerator
-    file = 'filament.e'
+    file = '../filament.e'
   []
 []
 
@@ -55,7 +55,7 @@
 [MultiApps]
   [sub]
     type = TransientMultiApp
-    input_files = heat_sub.i
+    input_files = ../heat_sub.i
     execute_on = TIMESTEP_END
     # sub_cycling = true
     # interpolate_transfers = true

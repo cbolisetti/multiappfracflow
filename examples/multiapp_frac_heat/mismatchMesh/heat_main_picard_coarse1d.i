@@ -1,7 +1,7 @@
 [Mesh]
   [fileRead]
     type = FileMeshGenerator
-    file = 'filament.e'
+    file = 'coarse.e'
   []
 []
 
@@ -42,13 +42,21 @@
     order = FIRST
     family=LAGRANGE
   []
+  [main_frac_res]
+    order = FIRST
+    family=LAGRANGE
+  []
+  [neg_main_frac_res]
+    order = FIRST
+    family=LAGRANGE
+  []
 []
 
 [MultiApps]
   [sub]
     type = TransientMultiApp
-    input_files = heat_sub.i
-    execute_on = TIMESTEP_BEGIN
+    input_files = 'heat_sub_1d.i'
+    execute_on = TIMESTEP_END
     # sub_cycling = true
     # interpolate_transfers = true
   []
@@ -69,6 +77,29 @@
     source_variable = T
     variable = matrix_T
   []
+  [res_from_sub]
+    type = MultiAppMeshFunctionTransfer
+    direction = from_multiapp
+    multi_app = sub
+    source_variable = sub_frac_res
+    variable = main_frac_res
+  []
+  [res_to_sub]
+    type = MultiAppMeshFunctionTransfer
+    direction = to_multiapp
+    multi_app = sub
+    source_variable = main_matrix_res
+    variable = sub_matrix_res
+  []
+[]
+
+[AuxKernels]
+  [fluxOutFromMainApp]
+    type = ParsedAux
+    args = 'main_frac_res'
+    variable = neg_main_frac_res
+    function = '-1*main_frac_res'
+  []
 []
 
 [Kernels]
@@ -85,7 +116,14 @@
     type = PorousFlowHeatMassTransfer
     variable = T
     v = frac_T
-    transfer_coefficient = -0.1
+    transfer_coefficient = 0.2
+  []
+  # I'm trying to account for the flux transfer from the PorousFlowHeatMassTransfer
+  # on the sub app
+  [residual]
+    type = CoupledForce
+    variable = T
+    v = main_frac_res
   []
 []
 
@@ -103,7 +141,19 @@
   dtmin = 0.001
   end_time = 10
   nl_abs_tol = 1E-7
+  # just forcing 2 picard iterations.  Probably not converging
+  accept_on_max_picard_iteration = true
+  picard_max_its = 2
+  picard_abs_tol = 1e-50
+  picard_rel_tol = 1e-50
 []
+
+# [Postprocessors]
+#   [./picard_its]
+#     type = NumPicardIterations
+#     execute_on = 'initial timestep_end'
+#   [../]
+# []
 
 # [VectorPostprocessors]
 #   [xmass]
@@ -117,7 +167,7 @@
 # []
 
 [Outputs]
-  file_base = 'main_begin'
+  file_base = 'main_picard_coarse1d'
   perf_graph = true
   console = true
   exodus = true
