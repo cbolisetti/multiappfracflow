@@ -88,14 +88,14 @@
 
 [Transfers]
   [T_to_matrix]
-    type = MultiAppMeshFunctionTransfer
+    type = MultiAppCopyTransfer
     direction = to_multiapp
     multi_app = matrix_app
     source_variable = frac_T
     variable = transferred_frac_T
   []
   [T_from_matrix]
-    type = MultiAppMeshFunctionTransfer
+    type = MultiAppCopyTransfer
     direction = from_multiapp
     multi_app = matrix_app
     source_variable = matrix_T

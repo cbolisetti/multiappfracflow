@@ -36,7 +36,7 @@ T_{m}(t, x) &= \frac{1 - e^{-2ht}}{4\sqrt{\pi t}}\exp\left(-\frac{x^{2}}{4t}\rig
 \end{aligned}
 \end{equation}
 
-### A single variable
+### A single variable (no heat transfer)
 
 When $h=0$, the system becomes decoupled.  The solution is $T_{m} = 0$, and $T_{f}$ given by the fundamental solution.  This may be solved by MOOSE without any MultiApp system using the following input file
 
@@ -46,7 +46,7 @@ The result depends on the spatial and temporal discretisation.  The temporal-dis
 
 ![Image](diffusion_multiapp/single_var.png)
 
-### Two coupled variables
+### Two coupled variables (no MultiApp)
 
 The system is coupled when $h\neq 0$..  A MultiApp approach is not strictly needed in this case, because there are no meshing problems: the domain is just the real line.  Hence, the system may be solved by MOOSE using the following input file
 
@@ -67,7 +67,7 @@ Using a MultiApp approach for the $h\neq 0$ case yields similar results.  The Mu
 
 Upon reflection, the reader will realise there are many potential ways of actually implementing this.  In the case at hand, the fracture physics ($T_{f}$) is governed by the "main" App, and the matrix physics ($T_{m}$) by the "sub" App.
 
-#### Transfer of heat energy
+#### Transfer of heat energy ("heat" MultiApp)
 
 In order to conserve heat energy, the following approach may be used
 
@@ -92,7 +92,7 @@ A couple of subtleties are that the `CoupledForce` Kernel will smooth the nodal 
 
 ![Image](diffusion_multiapp/fracture_app_heat.png)
 
-#### Transfer of temperature
+#### Transfer of temperature ("T" MultiApp)
 
 An alternative approach is to transfer $T_{m}$ and $T_{f}$:
 
@@ -119,6 +119,17 @@ The results are:
 
 ### Error in each approach
 
-TODO
+The L2 error in each approach (square-root of the sum of squares of differences between the MOOSE result and the analytical result) is plotted below.  The errors are very similar for each of the models explored in this section.  The magnitude of the error is largely unimportant: the scaling with time-step size is more crucial, and in this case it follows the [expected first-order result](https://web.mit.edu/10.001/Web/Course_Notes/Differential_Equations_Notes/node3.html).
+
+\begin{equation}
+\mathrm{L2 error} \propto \mathrm{d}t \ .
+\end{equation}
+
+![Image](diffusion_multiapp/l2_error.png)
+
+### Final remarks on stability
+
+One aspect that is not captured in this analysis is stability.  The non-MultiApp approaches ("No heat transfer" and "Coupled, no MultiApp") use fully-implicit time-stepping, so are unconditionally stable.  Conversely, the MultiApp approaches break this unconditional stability, which could be important in PorousFlow applications.  For instance, the matrix temperature is "frozen" while the fracture App is solving.  If a very large time-step is taken before the matrix App is allowed to evolve, this would lead to huge, unphysical heat losses to the matrix system.  The fracture temperature could reduce to the matrix temperature during fracture evolution, and then the matrix temperature could rise significantly during its evolution when it receives the large quantity of heat from the fracture.  This oscillation is unlikely to become unstable, but is clearly unphysical.
+
 
 
