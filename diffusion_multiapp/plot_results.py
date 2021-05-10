@@ -79,7 +79,7 @@ plt.plot(data['x'], data['frac_T'], linestyle='dotted', marker='.', label='dt = 
 data = np.genfromtxt(r'gold/fracture_app_heat_final_csv_final_results_0010.csv', delimiter=',', names=True)
 plt.plot(data['x'], data['frac_T'], linestyle='dotted', marker='.', label='dt = 10')
 data = np.genfromtxt(r'gold/fracture_app_heat_final_csv_final_results_0100.csv', delimiter=',', names=True)
-plt.plot(data['x'], data['frac_T'], 'o', label='dt = 1')
+plt.plot(data['x'], data['frac_T'], '.', label='dt = 1')
 plt.grid()
 plt.legend()
 plt.title('Diffusion with heat transfer (via "heat" MultiApp) at t=100')
