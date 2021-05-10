@@ -31,6 +31,7 @@
     type = CoupledForce
     variable = matrix_T
     v = heat_from_frac
+    coef = 2
   []
 []
 
