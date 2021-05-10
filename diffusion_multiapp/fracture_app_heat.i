@@ -42,7 +42,15 @@
     variable = frac_T
     v = transferred_matrix_T
     transfer_coefficient = 0.004
-    save_in = heat_to_matrix
+  []
+[]
+
+[AuxKernels]
+  [heat_to_matrix]
+    type = ParsedAux
+    variable = heat_to_matrix
+    args = 'frac_T transferred_matrix_T'
+    function = '0.004 * (frac_T - transferred_matrix_T)'
   []
 []
 
@@ -56,7 +64,7 @@
 [Executioner]
   type = Transient
   solve_type = NEWTON
-  dt = 100
+  dt = 1
   end_time = 100
 []
 

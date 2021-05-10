@@ -76,9 +76,9 @@ In order to conserve heat energy, the following approach may be used
 3. One timestep of the matrix system is solved, using a `CoupledForce` Kernel to inject the heat gained from the fracture at each node.
 4. The resulting $T_{m}$ is transferred to the fracture App.
 
-This is implemented using the following `Kernel` in the fracture App:
+This is implemented using the following `AuxKernel` in the fracture App:
 
-TODO listing fracture_app_heat.i start=[toMatrix] end=[]
+TODO listing fracture_app_heat.i block=AuxKernels
 
 along with the following Transfers:
 
@@ -88,7 +88,7 @@ and the `Kernel` in the matrix App:
 
 TODO listing matrix_app_heat.i start=[fromFrac] end=[]
 
-Notice the `coef = 2`, which is a numerical annoyance arising from the `CoupledForce` Kernel.  The `save_in` feature of the [PorousFlowHeatMassTransfer](PorousFlowHeatMassTransfer.md) Kernel includes the volume of each node, which in this case is 0.5 (except for the end nodes at $x=0$ and $x=50$ that have volume 0.25).  This means the `heat_to_matrix` is 0.5 times (or 0.25 times) what the `CoupleForce` Kernel is expecting.  If this was pursued further, a version of the `CoupledForce` Kernel that expects the volume-weighted heat-energy (using a `coupledDofValues`) would best be employed.  This would also eliminate spurious smoothing that occurs when evaluating the `heat_to_matrix` AuxVariable at the quadpoints.  This idea is not explored here.   The results are:
+A couple of subtleties are that the `CoupledForce` Kernel will smooth the nodal `heat_to_matrix` AuxVariable (since it uses quad-point values) and that a `save_in` cannot be employed in the `frac_app_heat.i` input file [PorousFlowHeatMassTransfer](PorousFlowHeatMassTransfer.md) Kernel (since that would include the nodal volume).  The results are:
 
 ![Image](diffusion_multiapp/fracture_app_heat.png)
 
