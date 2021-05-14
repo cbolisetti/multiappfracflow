@@ -132,4 +132,15 @@ The L2 error in each approach (square-root of the sum of squares of differences 
 One aspect that is not captured in this analysis is stability.  The non-MultiApp approaches ("No heat transfer" and "Coupled, no MultiApp") use fully-implicit time-stepping, so are unconditionally stable.  Conversely, the MultiApp approaches break this unconditional stability, which could be important in PorousFlow applications.  For instance, the matrix temperature is "frozen" while the fracture App is solving.  If a very large time-step is taken before the matrix App is allowed to evolve, this would lead to huge, unphysical heat losses to the matrix system.  The fracture temperature could reduce to the matrix temperature during fracture evolution, and then the matrix temperature could rise significantly during its evolution when it receives the large quantity of heat from the fracture.  This oscillation is unlikely to become unstable, but is clearly unphysical.
 
 
+## The diffusion equation with a mixed-dimensional problem
 
+The "fracture" and "matrix" in the previous section were identical spatial domains.  In this section, the diffusion equation is used to explore a mixed-dimensional problem, where the fracture is a 1D line "living inside" the 2D matrix.
+
+TODO
+
+Conforming example:
+
+fracture_diffusion/fracture_app.i
+fracture_diffusion/matrix_app.i
+
+![Image](fracture_diffusion/fracture_app_out_matrix_app0.png)
