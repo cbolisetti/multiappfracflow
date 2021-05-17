@@ -138,9 +138,19 @@ The "fracture" and "matrix" in the previous section were identical spatial domai
 
 TODO
 
-Conforming example:
+### Conforming example:
 
 fracture_diffusion/fracture_app.i
 fracture_diffusion/matrix_app.i
 
 ![Image](fracture_diffusion/fracture_app_out_matrix_app0.png)
+
+
+### Dirac example:
+
+Clearly there are some numerical artifacts here.  Probably the usual overshoot/undershoot problem of finite elements with no stabilization.
+
+fracture_diffusion/fracture_app_dirac.i
+fracture_diffusion/matrix_app_dirac.i
+
+![Image](fracture_diffusion/fracture_app_dirac_out_matrix_app0.png)

@@ -88,8 +88,8 @@
     type = MultiAppReporterTransfer
     direction = to_multiapp
     multi_app = matrix_app
-    from_reporters = heat_transfer_rate/joules_per_s
-    to_reporters = heat_transfer_rate/transferred_joules_per_s
+    from_reporters = 'heat_transfer_rate/joules_per_s heat_transfer_rate/x heat_transfer_rate/y heat_transfer_rate/z'
+    to_reporters = 'heat_transfer_rate/transferred_joules_per_s heat_transfer_rate/x heat_transfer_rate/y heat_transfer_rate/z'
   []
   [T_from_matrix]
     type = MultiAppInterpolationTransfer

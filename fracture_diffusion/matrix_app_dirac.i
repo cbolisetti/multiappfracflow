@@ -16,11 +16,6 @@
   []
 []
 
-[AuxVariables]
-  [transferred_joules_per_s]
-  []
-[]
-
 [Kernels]
   [dot]
     type = TimeDerivative
@@ -42,10 +37,15 @@
   []
 []
 
+[AuxVariables]
+  [transferred_joules_per_s]
+  []
+[]
+
 [VectorPostprocessors]
   [heat_transfer_rate]
     type = NodalValueSampler
-    outputs = mad_csv
+    outputs = none
     execute_on = NONE
     sort_by = x
     variable = transferred_joules_per_s
@@ -70,7 +70,4 @@
 [Outputs]
   print_linear_residuals = false
   exodus = true
-  [mad_csv]
-    type = CSV
-  []
 []
