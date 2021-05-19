@@ -137,15 +137,17 @@ One aspect that is not captured in this analysis is stability.  The non-MultiApp
 
 ## The diffusion equation with a mixed-dimensional problem
 
-The "fracture" and "matrix" in the previous section were identical spatial domains.  In this section, the diffusion equation is used to explore a mixed-dimensional problem, where the fracture is a 1D line "living inside" the 2D matrix.  The "conforming" case is explored using a non-MultiApp approach and a MultiApp approach, while the "nonconforming" case can only be explored using a MultiApp approach.
+The "fracture" and "matrix" in the previous section were identical spatial domains.  In this section, the diffusion equation is used to explore a mixed-dimensional problem, where the fracture is a 1D line "living inside" the 2D matrix.  In reality, the fracture has a certain thickness, but it is so small that it may be approximated by a 1D line.  This is important when estimating the heat transfer coefficient, as discussed below.
 
 ### Geometry and mesh
 
-In the "conforming" case, all fracture nodes are also matrix nodes: the fracture elements are actually created from a sideset of the 2D matrix elements.  The conforming case is shown in FiguresREF_TODO: the solution domain consists of the `fracture` subdomain (1D red line) and the `matrix` subdomain (in blue), which share nodes.  In the "nonconforming" case, no fracture nodes coincide with matrix nodes.  The nonconforming case is shown in TODO.
+There are two cases: "conforming" and "nonconforming".   In the conforming case, all fracture nodes are also matrix nodes: the fracture elements are actually created from a sideset of the 2D matrix elements.  The conforming case is shown in FiguresREF_TODO: the solution domain consists of the `fracture` subdomain (1D red line) and the `matrix` subdomain (in blue), which share nodes.  In the nonconforming case, no fracture nodes coincide with matrix nodes.  The nonconforming case is shown in TODO.
 
 ![Image](fracture_diffusion/fracture_diffusion_conforming_geometry.png)
 
 ![Image](fracture_diffusion/fracture_diffusion_conforming_mesh.png)
+
+The conforming case is explored using a non-MultiApp approach and a MultiApp approach, while the "nonconforming" case can only be explored using a MultiApp approach.
 
 In all cases, the finite-element mesh dictates the spatial resolution of the numerical solution, and the analysis that follows ignores this by using the same spatial resolution in each model.  However, it is important to remember that in practice, the use of finite elements means the solution is never "exact".  For instance, using large matrix elements will probably lead to poor results.  Large elements also produce more noticable overshoots and undershoots in the solution, which may be observed in the current models if the matrix `ny` is too small.
 
@@ -170,9 +172,26 @@ This leads naturally to the MultiApp approach: $H$ is generated as an `AuxVariab
 
 The boundary conditions are "no flow", except for the very left-hand side of the fracture domain, where temperature is fixed at $T_{f} = 1$.  The initial conditions are $T_{m} = 0 = T_{f}$.
 
-The diffusion coefficient in the fracture is $k_{f} = 1.0$, and is $k_{m} = 10^{-3}$ in the matrix.  The heat transfer coefficient is $h=1$.
+The diffusion coefficient in the fracture is $k_{f} = 1.0$, and is $k_{m} = 10^{-3}$ in the matrix.  The heat transfer coefficient is $h=10^{-3}$.
 
 Each simulation runs with `end_time = 50`.
+
+It is important to understand the mathematical meaning of the heat transfer coefficient, $h$, in this context.  **It must be set proportional to the fracture aperture.**  This is explained in TODO_REF_OTHER_FRACTURE_DOCO.  As further illustration, consider the MultiApp approach without diffusion.  Denote the known temperature values at the start of a time-step by $T_{f}^{0}$ and $T_{m}^{0}$, and those at the end by $T_{f}^{1}$ and $T_{m}^{1}$, which are the unknown values for this time-step.  The fracture equation reads
+
+\begin{equation}
+\frac{T_{f}^{1} - T_{f}^{0}}{\Delta t} = h (T_{m}^{0} - T_{f}^{1}) \ .
+\end{equation}
+
+The heat-rate from each fracture node is $h(T_{m}^{0} - T_{f}^{1})V_{f}$, where $L_{f}$ is the "volume" modelled by the fracture node.  Since this is a 1D fracture, $L_{f}$ is actually a length, which is numerically equal to half the sum of the lengths of the elements joined to the node.  This heat-rate gets applied to the appropriate matrix nodes: the equation reads
+
+\begin{equation}
+\frac{T_{m}^{1} - T_{m}^{0}}{\Delta t} = h (T_{f}^{1} - T_{m}^{0}) \frac{L_{f}}{A_{m}} \ ,
+\end{equation}
+
+where $A_{m}$ is the "volume" modelled by the matrix node (actually an area in this 2D situation).  For this to be physically consistent, $h$ must contain information about the fracture aperture, for the hot material in the fracture provides heat at the rate given above, which obviously increases linearly with fracture aperture.
+
+Finally, notice that if $L_{f} \gg A_{m}$ then the "large" fracture node can apply a lot of heat to the "small" matrix node, which causes numerical instability if $\Delta t$ is too large.
+
 
 ### No MultiApp: the benchmark
 
@@ -188,23 +207,36 @@ The solution produced by MOOSE depends upon time-step size.  Some examples are s
 
 ![Image](fracture_diffusion/no_multiapp_frac_T.png)
 
+### A MultiApp approach for the conforming case
 
+In this case, the matrix App is the main App, and the fracture App is the subApp.  The fracture input file has the following features.
 
+- An `AuxVariable` called `transferred_matrix_T` that is $T_{m}$ interpolated to the fracture mesh.
 
+- An `AuxVariable` called `joules_per_s` that is the heat rate coming from each node.  Mathematically this is $h(T_{f} - T_{m})L$, where $L$ is the "volume" modelled by the fracture node.  This is populated by the `save_in` feature:
 
+TODO listing fracture_diffusion/fracture_app_dirac.i block=Kernels
 
+- A `NodalValueSampler` `VectorPostprocessor` that captures all the `joules_per_s` values at each fracture node
 
-fracture_diffusion/fracture_app.i
-fracture_diffusion/matrix_app.i
+TODO listing fracture_diffusion/fracture_app_dirac.i block=VectorPostprocessors
 
-![Image](fracture_diffusion/fracture_app_out_matrix_app0.png)
+The matrix input file has the following features
 
+- Transfers that send $T_{m}$ to the fracture App, and receive the `joules_per_s` from the fracture App
 
-### Dirac example:
+TODO listing fracture_diffusion/matrix_app_dirac.i block=Transfers
 
-Clearly there are some numerical artifacts here.  Probably the usual overshoot/undershoot problem of finite elements with no stabilization.
+- This latter `Transfer` writes its information into a `VectorPostprocessor` in the matrix App.  That is then converted to a Dirac source by a `VectorPostprocessorPointSource` `DiracKernel`:
 
-fracture_diffusion/fracture_app_dirac.i
-fracture_diffusion/matrix_app_dirac.i
+TODO listing fracture_diffusion/matrix_app_dirac.i block=DiracKernels
 
-![Image](fracture_diffusion/fracture_app_dirac_out_matrix_app0.png)
+### A MultiApp approach for the nonconforming case
+
+TODO
+
+### Results
+
+The L2 error of the fracture temperature in each approach (square-root of the sum of squares of differences between the $T_{f}$ and the benchmark result) is plotted below.  As expected, the error is proportional to $\Delta t$.  The error when using the MultiApp approaches is larger than the non-MultiApp approach, because $T_{f}$ is fixed when $T_{m}$ is being solved for, and vice versa.
+
+![Image](fracture_diffusion/l2_error.png)

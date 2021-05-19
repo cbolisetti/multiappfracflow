@@ -2,9 +2,9 @@
   [generate]
     type = GeneratedMeshGenerator
     dim = 1
-    nx = 100
+    nx = 30
     xmin = 0
-    xmax = 50.0
+    xmax = 30.0
   []
 []
 
@@ -42,7 +42,7 @@
     type = PorousFlowHeatMassTransfer
     variable = frac_T
     v = transferred_matrix_T
-    transfer_coefficient = 0.004
+    transfer_coefficient = 1E-2
     save_in = joules_per_s
   []
 []
@@ -53,6 +53,12 @@
     outputs = none
     sort_by = x
     variable = joules_per_s
+  []
+  [frac_T]
+    type = NodalValueSampler
+    outputs = frac_T
+    sort_by = x
+    variable = frac_T
   []
 []
 
@@ -66,36 +72,16 @@
 [Executioner]
   type = Transient
   solve_type = NEWTON
-  dt = 10
-  end_time = 200
+  dt = 50
+  end_time = 50
 []
 
 [Outputs]
   print_linear_residuals = false
-  exodus = true
-[]
-
-[MultiApps]
-  [matrix_app]
-    type = TransientMultiApp
-    input_files = matrix_app_dirac.i
-    execute_on = TIMESTEP_END
+  exodus = false
+  [frac_T]
+    type = CSV
+    execute_on = final
   []
 []
 
-[Transfers]
-  [heat_to_matrix]
-    type = MultiAppReporterTransfer
-    direction = to_multiapp
-    multi_app = matrix_app
-    from_reporters = 'heat_transfer_rate/joules_per_s heat_transfer_rate/x heat_transfer_rate/y heat_transfer_rate/z'
-    to_reporters = 'heat_transfer_rate/transferred_joules_per_s heat_transfer_rate/x heat_transfer_rate/y heat_transfer_rate/z'
-  []
-  [T_from_matrix]
-    type = MultiAppInterpolationTransfer
-    direction = from_multiapp
-    multi_app = matrix_app
-    source_variable = matrix_T
-    variable = transferred_matrix_T
-  []
-[]

@@ -2,12 +2,12 @@
   [generate]
     type = GeneratedMeshGenerator
     dim = 2
-    nx = 50
+    nx = 30
     xmin = 0
-    xmax = 50.0
-    ny = 10
-    ymin = -10
-    ymax = 10.0
+    xmax = 30.0
+    ny = 40 # anything less than this produces over/under-shoots
+    ymin = -3
+    ymax = 3
   []
 []
 
@@ -62,12 +62,38 @@
 [Executioner]
   type = Transient
   solve_type = NEWTON
-  dt = 200
-  end_time = 200
+  dt = 0.1
+  end_time = 50
 []
 
 
 [Outputs]
   print_linear_residuals = false
-  exodus = true
+  exodus = false
 []
+
+[MultiApps]
+  [fracture_app]
+    type = TransientMultiApp
+    input_files = fracture_app_dirac.i
+    execute_on = TIMESTEP_END
+  []
+[]
+
+[Transfers]
+  [T_to_fracture]
+    type = MultiAppInterpolationTransfer
+    direction = to_multiapp
+    multi_app = fracture_app
+    source_variable = matrix_T
+    variable = transferred_matrix_T
+  []
+  [heat_from_fracture]
+    type = MultiAppReporterTransfer
+    direction = from_multiapp
+    multi_app = fracture_app
+    from_reporters = 'heat_transfer_rate/joules_per_s heat_transfer_rate/x heat_transfer_rate/y heat_transfer_rate/z'
+    to_reporters = 'heat_transfer_rate/transferred_joules_per_s heat_transfer_rate/x heat_transfer_rate/y heat_transfer_rate/z'
+  []
+[]
+  
