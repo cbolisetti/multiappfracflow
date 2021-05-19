@@ -8,12 +8,12 @@ Before considering porous flow in a mixed-dimensional fracture-matrix system, co
 
 \begin{equation}
 \begin{aligned}
-0 &= \dot{T}_{f} - \nabla^{2}T_{f} + h(T_{f} - T_{m}) \ , \\
-0 &= \dot{T}_{m} - \nabla^{2}T_{m} + h(T_{m} - T_{f}) \ .
+0 &= \dot{T}_{f} - k_{f}\nabla^{2}T_{f} + h(T_{f} - T_{m}) \ , \\
+0 &= \dot{T}_{m} - k_{m}\nabla^{2}T_{m} + h(T_{m} - T_{f}) \ .
 \end{aligned}
 \end{equation}
 
-In each line, the first two terms are the diffusion equation, while the third is heat transfer between the two systems.  The heat transfer coefficient is denoted by $h$.  In applications, the numerical value of $h$ is usually determined by experiment, or by consulting established empirical relationships, such those found on [wikipedia](https://en.wikipedia.org/wiki/Heat_transfer_coefficient).  If $T_{f} > T_{m}$ then the heat-transfer term takes heat energy from the $T_{f}$ system and applies it to the $T_{m}$ system.  It is important that the same numerical value of $h$ is used in both formulae, otherwise heat energy would not be conserved.
+In each line, the first two terms are the diffusion equation (with diffusion coefficients $k_{f}$ and $k_{m}$), while the third is heat transfer between the two systems.  The heat transfer coefficient is denoted by $h$.  In applications, the numerical value of $h$ is usually determined by experiment, or by consulting established empirical relationships, such those found on [wikipedia](https://en.wikipedia.org/wiki/Heat_transfer_coefficient).  If $T_{f} > T_{m}$ then the heat-transfer term takes heat energy from the $T_{f}$ system and applies it to the $T_{m}$ system.  It is important that the same numerical value of $h$ is used in both formulae, otherwise heat energy would not be conserved.
 
 In this section, assume the boundary conditions are
 \begin{equation}
@@ -27,6 +27,8 @@ T_{m}(t = 0) &= 0 \ ,
 \end{aligned}
 \end{equation}
 where $\delta$ is the Dirac delta functions.  These conditions make the analytic solution easy to derive.
+
+Also, assume that $k_{f} = 1 = k_{m}$.
 
 Physically, this system represents the situation in which the $T_{f}$ system is initially provided with a unit of heat energy at $x=0$, and that heat energy is allowed to disperse under diffusion, and transfer to the $T_{m}$ system, which also disperses it.  To derive the solution, the sum of the two governing equations yields the standard diffusion equation (which may be solved using the [fundamental solution](https://en.wikipedia.org/wiki/Heat_equation)), while the difference yields the diffusion equation augmented with a decay term.  The final result is:
 \begin{equation}
@@ -48,7 +50,7 @@ The result depends on the spatial and temporal discretisation.  The temporal-dis
 
 ### Two coupled variables (no MultiApp)
 
-The system is coupled when $h\neq 0$..  A MultiApp approach is not strictly needed in this case, because there are no meshing problems: the domain is just the real line.  Hence, the system may be solved by MOOSE using the following input file
+The system is coupled when $h\neq 0$.  A MultiApp approach is not strictly needed in this case, because there are no meshing problems: the domain is just the real line.  Hence, the system may be solved by MOOSE using the following input file
 
 TODO: listing two_vars.i
 
@@ -132,13 +134,65 @@ The L2 error in each approach (square-root of the sum of squares of differences 
 One aspect that is not captured in this analysis is stability.  The non-MultiApp approaches ("No heat transfer" and "Coupled, no MultiApp") use fully-implicit time-stepping, so are unconditionally stable.  Conversely, the MultiApp approaches break this unconditional stability, which could be important in PorousFlow applications.  For instance, the matrix temperature is "frozen" while the fracture App is solving.  If a very large time-step is taken before the matrix App is allowed to evolve, this would lead to huge, unphysical heat losses to the matrix system.  The fracture temperature could reduce to the matrix temperature during fracture evolution, and then the matrix temperature could rise significantly during its evolution when it receives the large quantity of heat from the fracture.  This oscillation is unlikely to become unstable, but is clearly unphysical.
 
 
+
 ## The diffusion equation with a mixed-dimensional problem
 
-The "fracture" and "matrix" in the previous section were identical spatial domains.  In this section, the diffusion equation is used to explore a mixed-dimensional problem, where the fracture is a 1D line "living inside" the 2D matrix.
+The "fracture" and "matrix" in the previous section were identical spatial domains.  In this section, the diffusion equation is used to explore a mixed-dimensional problem, where the fracture is a 1D line "living inside" the 2D matrix.  The "conforming" case is explored using a non-MultiApp approach and a MultiApp approach, while the "nonconforming" case can only be explored using a MultiApp approach.
 
-TODO
+### Geometry and mesh
 
-### Conforming example:
+In the "conforming" case, all fracture nodes are also matrix nodes: the fracture elements are actually created from a sideset of the 2D matrix elements.  The conforming case is shown in FiguresREF_TODO: the solution domain consists of the `fracture` subdomain (1D red line) and the `matrix` subdomain (in blue), which share nodes.  In the "nonconforming" case, no fracture nodes coincide with matrix nodes.  The nonconforming case is shown in TODO.
+
+![Image](fracture_diffusion/fracture_diffusion_conforming_geometry.png)
+
+![Image](fracture_diffusion/fracture_diffusion_conforming_mesh.png)
+
+In all cases, the finite-element mesh dictates the spatial resolution of the numerical solution, and the analysis that follows ignores this by using the same spatial resolution in each model.  However, it is important to remember that in practice, the use of finite elements means the solution is never "exact".  For instance, using large matrix elements will probably lead to poor results.  Large elements also produce more noticable overshoots and undershoots in the solution, which may be observed in the current models if the matrix `ny` is too small.
+
+### Physics
+
+The two variables, $T_{f}$ and $T_{m}$, are the temperature in the fracture and matrix, respectively.  These are called `frac_T` and `matrix_T` in the MOOSE input files.  Each obeys at diffusion equation, with heat transfer between the two variables, as written in Eqn(1)REF_TODO.
+
+However, $T_{f}$ is only defined on the fracture, and $T_{m}$ is only defined on the matrix, and the heat transfer only occurs on the interface between them.  Therefore, in the conforming case, the heat transfer only occurs on the `fracture` subdomain, while in the non-conforming case, the fracture appears as a set of Dirac sources in the `matrix` subdomain.  More precisely, the equation in the matrix domain should be written:
+
+\begin{equation}
+0 = \dot{T}_{m} - k_{m}\nabla^{2}T_{m} - H\delta(y) \ ,
+\end{aligned}
+\end{equation}
+
+where $\delta$ is the Dirac delta function, and $y=0$ is the position of the fracture.  Here,
+
+\begin{equation}
+H = h(T_{f} - T_{m}) \ .
+\end{equation}
+
+This leads naturally to the MultiApp approach: $H$ is generated as an `AuxVariable` by the `fracture` App, so exists only in the `fracture` subdomain.  It is then passed to the `matrix` App, and applied as a `DiracKernel`.
+
+The boundary conditions are "no flow", except for the very left-hand side of the fracture domain, where temperature is fixed at $T_{f} = 1$.  The initial conditions are $T_{m} = 0 = T_{f}$.
+
+The diffusion coefficient in the fracture is $k_{f} = 1.0$, and is $k_{m} = 10^{-3}$ in the matrix.  The heat transfer coefficient is $h=1$.
+
+Each simulation runs with `end_time = 50`.
+
+### No MultiApp: the benchmark
+
+In the conforming case, a MultiApp approach need not be taken, and the Kernels are:
+
+TODO listing fracture_diffusion/no_multiapp.i block=Kernels
+
+The matrix temperature is shown in FigureTODO_REF
+
+![Image](fracture_diffusion/no_multiapp_matrix_T.png)
+
+The solution produced by MOOSE depends upon time-step size.  Some examples are shown in FigureTODO_REF.  Evidently, reducing the time-step below 1.0 does not impact the solution very much.  Hence, the solution using $\mathrm{d}t = 0.0625$ is used as the *benchmark* for the remainder of this section.
+
+![Image](fracture_diffusion/no_multiapp_frac_T.png)
+
+
+
+
+
+
 
 fracture_diffusion/fracture_app.i
 fracture_diffusion/matrix_app.i
