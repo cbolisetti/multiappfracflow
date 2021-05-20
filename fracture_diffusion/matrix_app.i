@@ -51,6 +51,9 @@
   solve_type = NEWTON
   dt = 200
   end_time = 200
+  nl_rel_tol = 1e-8
+  petsc_options_iname = '-pc_type  -pc_factor_mat_solver_package'
+  petsc_options_value = 'lu        superlu_dist'
 []
 
 

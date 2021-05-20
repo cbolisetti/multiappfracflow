@@ -51,7 +51,7 @@
   [heat_transfer_rate]
     type = NodalValueSampler
     outputs = none
-    sort_by = x
+    sort_by = id
     variable = joules_per_s
   []
   [frac_T]
@@ -72,8 +72,11 @@
 [Executioner]
   type = Transient
   solve_type = NEWTON
-  dt = 50
+  dt = 1
   end_time = 50
+  nl_rel_tol = 1e-8
+  petsc_options_iname = '-pc_type  -pc_factor_mat_solver_package'
+  petsc_options_value = 'lu        superlu_dist'
 []
 
 [Outputs]
@@ -84,4 +87,3 @@
     execute_on = final
   []
 []
-

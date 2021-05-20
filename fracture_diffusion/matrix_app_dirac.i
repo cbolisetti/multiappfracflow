@@ -37,18 +37,12 @@
   []
 []
 
-[AuxVariables]
-  [transferred_joules_per_s]
-  []
-[]
-
 [VectorPostprocessors]
   [heat_transfer_rate]
-    type = NodalValueSampler
+    type = ConstantVectorPostprocessor
+    vector_names = 'transferred_joules_per_s x y z'
+    value = '0; 0; 0; 0'
     outputs = none
-    execute_on = NONE
-    sort_by = x
-    variable = transferred_joules_per_s
   []
 []
 
@@ -62,21 +56,27 @@
 [Executioner]
   type = Transient
   solve_type = NEWTON
-  dt = 0.1
+  dt = 25
   end_time = 50
+  nl_rel_tol = 1e-8
+  petsc_options_iname = '-pc_type  -pc_factor_mat_solver_package'
+  petsc_options_value = 'lu        superlu_dist'
 []
 
 
 [Outputs]
   print_linear_residuals = false
-  exodus = false
+  exodus = true
+  csv=true
 []
 
 [MultiApps]
   [fracture_app]
     type = TransientMultiApp
     input_files = fracture_app_dirac.i
-    execute_on = TIMESTEP_END
+    execute_on = TIMESTEP_BEGIN
+    sub_cycling = true
+    interpolate_transfers = true
   []
 []
 
@@ -96,4 +96,3 @@
     to_reporters = 'heat_transfer_rate/transferred_joules_per_s heat_transfer_rate/x heat_transfer_rate/y heat_transfer_rate/z'
   []
 []
-  
