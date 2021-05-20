@@ -2,18 +2,75 @@
 
 A related page [TODO: link] describes how to simulate porous flow in fractured porous media, assuming that the fractures can be incorporated into the mesh as lower dimensional elements, for instance, as 2D "fracture" elements inside a 3D "matrix" mesh.  Unfortunately, realistic fracture networks have such complicated geometry that meshing them is difficult, while incorporating their mesh into a higher-dimensional mesh is almost impossible.  In this page, it is illustrated that MOOSE's MultiApp system may be employed to solve this problem: the "fracture" mesh is governed by one App, which is seperate from the "matrix" mesh that is governed by another App.
 
-## A MultiApp primer using the diffusion equation
+## The heat equation in fracture-matrix systems
 
-Before considering porous flow in a mixed-dimensional fracture-matrix system, consider the simpler situation involving two coupled diffusion equations in 1D.  Introduce the "temperature" variables, $T_{f}$ and $T_{m}$, which obey
+The 3D heat equation is
+
+\begin{equation}
+0 = c\frac{\partial T}{\partial t} - \nabla(\lambda \nabla T) \ .
+\end{equation}
+Here:
+
+- $T$ is the temperature, with SI units K;
+- $c$ is the volumetric heat capacity of the medium (which is the product of specific heat capacity and density), with SI units J.m$^{-3}$.K$^{-1}$;
+- $t$ is time and $\nabla$ is the vector of spatial derivatives;
+- $\lambda$ is the thermal conductivity, with SI units J.s$^{-1}$.m$^{-1}$.K$^{-1}$.
+
+This equation (multiplied by the test functions) gets integrated over the elemental volume in the finite-element scheme.  The fracture is actually a 3D object, but it is so thin that temperature (and $c$ and $\lambda$) do not vary appreciably over its thickness (aperture).  Therefore, the integral over the thickness may be done explicitly, and the fracture modelled as a 2D object, with heat equation reading
+
+\begin{equation}
+0 = ac\frac{\partial T}{\partial t} - a\tilde{\nabla}(\lambda \tilde{\nabla} T) \ ,
+\end{equation}
+
+where $a$ is the fracture thickness, and $\tilde{\nabla}$ are derivatives transverse to the fracture.  This equation is integrated over the fracture-element 2D area in the finite-element method.
+
+In order to specify the coupling between the fracture and matrix system precisely, let us introduce some notation.  Suppose the position of the fracture is given by a level-set function, $f = f(x, y, z)$ (where $x$, $y$ and $z$ are the Cartesian coordinates): that is, the fracture is at points where $f=0$, but not at points where $f\neq 0$.  For example, if the fracture occupies the $(x, y)$ plane, then $f=z$ would be a suitable function.  The one-dimensional Dirac delta function, $\delta(f)$, has SI units m$^{-1}$, and is zero everywhere except on the fracture.  When $\delta(f)$ is integrated over a direction normal to the fracture, the result is $\int_{\mathrm{normal}}\delta(f) = 1$.  When $\delta(f)$ is integrated over a volume containing the fracture, the result is $\int_{V}\delta(f) = A$, where $A$ is the area of the fracture in the volume.
+
+The approach explored in this page uses two temperature variables, $T_{m}$ and $T_{f}$, which are the temperature in the matrix and fracture, respectively.  $T_{m}$ is defined throughout the entire matrix (including the embedded fracture), while $T_{f}$ is defined on the fracture only.  These are assumed to obey:
 
 \begin{equation}
 \begin{aligned}
-0 &= \dot{T}_{f} - k_{f}\nabla^{2}T_{f} + h(T_{f} - T_{m}) \ , \\
-0 &= \dot{T}_{m} - k_{m}\nabla^{2}T_{m} + h(T_{m} - T_{f}) \ .
+0 &=  c_{m}\dot{T}_{m} -  \nabla(\lambda_{m}\nabla T_{m}) +  h(T_{m} - T_{f})\delta(f) \ , \\
+0 &= ac_{f}\dot{T}_{f} - a\tilde{\nabla}(\lambda_{f}\tilde{\nabla} T_{f}) + h(T_{f} - T_{m}) \ .
 \end{aligned}
 \end{equation}
 
-In each line, the first two terms are the diffusion equation (with diffusion coefficients $k_{f}$ and $k_{m}$), while the third is heat transfer between the two systems.  The heat transfer coefficient is denoted by $h$.  In applications, the numerical value of $h$ is usually determined by experiment, or by consulting established empirical relationships, such those found on [wikipedia](https://en.wikipedia.org/wiki/Heat_transfer_coefficient).  If $T_{f} > T_{m}$ then the heat-transfer term takes heat energy from the $T_{f}$ system and applies it to the $T_{m}$ system.  It is important that the same numerical value of $h$ is used in both formulae, otherwise heat energy would not be conserved.
+In these equations, $h$ is the heat-transfer coefficient between the matrix and the fracture, with SI units J.m$^{-2}$.s$^{-1}$. If $T_{f} > T_{m}$ then the heat-transfer term takes heat energy from the $T_{f}$ system and applies it to the $T_{m}$ system.  The heat-transfer coefficient plays a central role in this page.  Heat-transfer coefficients have been used by engineers to accurately account for the complicated processes that occur at the interface between two materials.  If the two materials have temperature $T_{0}$ and $T_{1}$, respectively, and are connected by an area $A$ then the rate of heat transfer between them is $Ah(T_{0} - T_{1})$, with SI units J.s$^{-1}$.  Heat-transfer coefficients have been estimated for many different situations (see, for instance [wikipedia](https://en.wikipedia.org/wiki/Heat_transfer_coefficient)).  A suggestion for the current situation is given below.
+
+In the case at hand, when the second (fracture) equation is integrated over a (2D) portion of the fracture of area $A$, the heat-energy transferred to the matrix is $Ah\langle T_{f} - T_{m} \rangle$, where the $\langle\rangle$ indicates the average over $A$.  This is equal to the heat-energy transferred according to the first equation, when it is integrated over a volume containing the same portion of fracture.  Therefore, heat energy is conserved in this system.
+
+To motivate a numerical value for $h$, assume the fracture occupies the $(x, y)$ plane.  The temperature distribution in the immediate vicinity of the fracture will be complicated in reality.  However, consider just an area $A$ of the fracture, and consider a matrix volume, $|x|\leq \sqrt{A}/2$, $|y|\leq \sqrt{A}/2$ and $|z|\leq L$ (a rectangular cuboid), that contains the area $A$ of the fracture plane.  At steady-state, where $T_{f}$ is held fixed at $T_{0}$, and the boundary values of $T_{m}(z=\pm L)$ are fixed at $T_{1}$, the temperature will vary linearly between $T_{0}$ and $T_{1}$.  The heat energy (J.s$^{-1}$) passing from the fracture to the cuboid's planes at $z=\pm L$ is
+
+\begin{equation}
+A\lambda_{m}^{zz}\frac{\partial}{\partial z} T = A \frac{\lambda_{m}^{zz}}{L} (T_{0} - T_{1}) \ ,
+\end{equation}
+
+where $\lambda_{m}^{zz}$ is the $zz$ component of the thermal-conductivity tensor.  This may be identified with the $Ah(T_{0} - T_{1})$, yielding an expression for $h = \lambda_{m}^{zz}/L$.
+
+The rectangular cuboid mentioned in the previous paragraph can be identified with a matrix finite element, yielding an estimate of the heat-transfer coefficient appropriate to use in the finite-element setting:
+
+\begin{equation}
+h = \frac{\lambda_{m}^{nn}}{L} \ ,
+\end{equation}
+
+where $\lambda_{nn}$ is the component of the thermal-conductivity tensor normal to the fracture surface, and $L$ is the distance from the fracture to the finite-element node.  This equation was motivated in the same way as the Peaceman borehole TODO_LINK, except that there the situation is a line-source, resulting in a logarithmic steady-state solution.  The above explanation could be generalised to non-cuboid elements in the same way that the Peaceman approach has been, but given the complexity of physical processes "covered up" by the use of the heat-transfer, it is debatable that the generalisation would lead to better agreement with experiments in real systems.
+
+Some readers might be more interested in a physical, rather than mathematical motivation for $h = \lambda_{m}/L$.  It isn't hard to justify $h\propto \lambda_{m}$, for if the matrix thermal conductivity is low, then not much heat will flow between the fracture and the matrix.  Now consider a volume of matrix containing a portion of the fracture.  Fix the temperature on the boundary of this volume.  If the volume is huge ($L$ large) then the heat flux from the fracture will be small, because the gradient of temperature will be small within the volume.  Reducing the size of the element (while keeping the temperature on its boundary fixed) should clearly lead to higher heat flux, because the gradient of temperature is increased.  Therefore, the heat transfer should be proportional to $\lambda_{m}(T_{f}-T_{m})/L$ in a finite element.
+
+
+
+## A MultiApp primer using the diffusion equation
+
+Before considering porous flow in a mixed-dimensional fracture-matrix system, consider the simpler situation involving two coupled diffusion equations in 1D.  Assume physical parameters have been chosen appropriately so that
+
+\begin{equation}
+\begin{aligned}
+0 &= \dot{T}_{f} - \nabla^{2}T_{f} + h(T_{f} - T_{m}) \ , \\
+0 &= \dot{T}_{m} - \nabla^{2}T_{m} + h(T_{m} - T_{f}) \ .
+\end{aligned}
+\end{equation}
+
+It is important that the same numerical value of $h$ is used in both formulae, otherwise heat energy would not be conserved in this system.
 
 In this section, assume the boundary conditions are
 \begin{equation}
@@ -27,8 +84,6 @@ T_{m}(t = 0) &= 0 \ ,
 \end{aligned}
 \end{equation}
 where $\delta$ is the Dirac delta functions.  These conditions make the analytic solution easy to derive.
-
-Also, assume that $k_{f} = 1 = k_{m}$.
 
 Physically, this system represents the situation in which the $T_{f}$ system is initially provided with a unit of heat energy at $x=0$, and that heat energy is allowed to disperse under diffusion, and transfer to the $T_{m}$ system, which also disperses it.  To derive the solution, the sum of the two governing equations yields the standard diffusion equation (which may be solved using the [fundamental solution](https://en.wikipedia.org/wiki/Heat_equation)), while the difference yields the diffusion equation augmented with a decay term.  The final result is:
 \begin{equation}
@@ -137,9 +192,9 @@ One aspect that is not captured in this analysis is stability.  The non-MultiApp
 
 ## The diffusion equation with a mixed-dimensional problem
 
-The "fracture" and "matrix" in the previous section were identical spatial domains.  In this section, the diffusion equation is used to explore a mixed-dimensional problem, where the fracture is a 1D line "living inside" the 2D matrix.  In reality, the fracture has a certain thickness, but it is so small that it may be approximated by a 1D line.  This is important when estimating the heat transfer coefficient, as discussed below.
+The "fracture" and "matrix" in the previous section were identical spatial domains.  In this section, the diffusion equation is used to explore a mixed-dimensional problem, where the fracture is a 1D line "living inside" the 2D matrix.  In reality, the fracture has a certain thickness, but it is so small that it may be approximated by a 1D line.  This is important when formulating the equation and estimating the heat transfer coefficient, as described above.
 
-### Geometry and mesh
+### Geometry and mesh - TODO: re-write with above notation
 
 There are two cases: "conforming" and "nonconforming".   In the conforming case, all fracture nodes are also matrix nodes: the fracture elements are actually created from a sideset of the 2D matrix elements.  The conforming case is shown in FiguresREF_TODO: the solution domain consists of the `fracture` subdomain (1D red line) and the `matrix` subdomain (in blue), which share nodes.  In the nonconforming case, no fracture nodes coincide with matrix nodes.  The nonconforming case is shown in TODO.
 
@@ -159,7 +214,6 @@ However, $T_{f}$ is only defined on the fracture, and $T_{m}$ is only defined on
 
 \begin{equation}
 0 = \dot{T}_{m} - k_{m}\nabla^{2}T_{m} - H\delta(y) \ ,
-\end{aligned}
 \end{equation}
 
 where $\delta$ is the Dirac delta function, and $y=0$ is the position of the fracture.  Here,
@@ -190,7 +244,7 @@ The heat-rate from each fracture node is $h(T_{m}^{0} - T_{f}^{1})V_{f}$, where 
 
 where $A_{m}$ is the "volume" modelled by the matrix node (actually an area in this 2D situation).  For this to be physically consistent, $h$ must contain information about the fracture aperture, for the hot material in the fracture provides heat at the rate given above, which obviously increases linearly with fracture aperture.
 
-Finally, notice that if $L_{f} \gg A_{m}$ then the "large" fracture node can apply a lot of heat to the "small" matrix node, which causes numerical instability if $\Delta t$ is too large.
+Finally, notice that if $W_{f}L_{f} \gg A_{m}$ then the "large" fracture node (modelling width $W_{f}$ and length $L_{f}$) can apply a lot of heat to the "small" matrix node, which causes numerical instability if $\Delta t$ is too large.
 
 
 ### No MultiApp: the benchmark
@@ -203,7 +257,7 @@ The matrix temperature is shown in FigureTODO_REF
 
 ![Image](fracture_diffusion/no_multiapp_matrix_T.png)
 
-The solution produced by MOOSE depends upon time-step size.  Some examples are shown in FigureTODO_REF.  Evidently, reducing the time-step below 1.0 does not impact the solution very much.  Hence, the solution using $\mathrm{d}t = 0.0625$ is used as the *benchmark* for the remainder of this section.
+The solution produced by MOOSE depends upon time-step size.  Some examples are shown in FigureTODO_REF.  Evidently, reducing the time-step below 1.0 does not impact the solution very much.  Hence, the solution using $\Delta t = 0.0625$ is used as the *benchmark* for the remainder of this section.
 
 ![Image](fracture_diffusion/no_multiapp_frac_T.png)
 
