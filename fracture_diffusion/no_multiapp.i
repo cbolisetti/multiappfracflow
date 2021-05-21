@@ -14,12 +14,12 @@
   [generate]
     type = GeneratedMeshGenerator
     dim = 2
-    nx = 30
+    nx = 20
     xmin = 0
-    xmax = 30.0
-    ny = 40 # anything less than this produces over/under-shoots
-    ymin = -3
-    ymax = 3
+    xmax = 10.0
+    ny = 20 # anything less than this produces over/under-shoots
+    ymin = -2
+    ymax = 2
   []
   [matrix_subdomain]
     type = RenameBlockGenerator
@@ -64,13 +64,15 @@
 
 [Kernels]
   [dot_frac_T]
-    type = TimeDerivative
+    type = CoefTimeDerivative
+    Coefficient = 1E-2
     variable = frac_T
     block = fracture
   []
   [fracture_diffusion]
-    type = Diffusion
+    type = AnisotropicDiffusion
     variable = frac_T
+    tensor_coeff = '1E-2 0 0 0 1E-2 0 0 0 1E-2'
     block = fracture
   []
   [toMatrix]
@@ -78,7 +80,7 @@
     block = fracture
     variable = frac_T
     v = matrix_T
-    transfer_coefficient = 1E-2
+    transfer_coefficient = 0.02
   []
   [dot_matrix_T]
     type = TimeDerivative
@@ -96,7 +98,7 @@
     block = fracture
     variable = matrix_T
     v = frac_T
-    transfer_coefficient = 1E-2
+    transfer_coefficient = 0.02
   []
 []
 
@@ -110,8 +112,8 @@
 [Executioner]
   type = Transient
   solve_type = NEWTON
-  dt = 1
-  end_time = 50
+  dt = 100
+  end_time = 100
 []
 
 [VectorPostprocessors]

@@ -30,6 +30,7 @@ The approach explored in this page uses two temperature variables, $T_{m}$ and $
 
 \begin{equation}
 \begin{aligned}
+\label{eqn.coupled.basic}
 0 &=  c_{m}\dot{T}_{m} -  \nabla(\lambda_{m}\nabla T_{m}) +  h(T_{m} - T_{f})\delta(f) \ , \\
 0 &= ac_{f}\dot{T}_{f} - a\tilde{\nabla}(\lambda_{f}\tilde{\nabla} T_{f}) + h(T_{f} - T_{m}) \ .
 \end{aligned}
@@ -39,24 +40,25 @@ In these equations, $h$ is the heat-transfer coefficient between the matrix and 
 
 In the case at hand, when the second (fracture) equation is integrated over a (2D) portion of the fracture of area $A$, the heat-energy transferred to the matrix is $Ah\langle T_{f} - T_{m} \rangle$, where the $\langle\rangle$ indicates the average over $A$.  This is equal to the heat-energy transferred according to the first equation, when it is integrated over a volume containing the same portion of fracture.  Therefore, heat energy is conserved in this system.
 
-To motivate a numerical value for $h$, assume the fracture occupies the $(x, y)$ plane.  The temperature distribution in the immediate vicinity of the fracture will be complicated in reality.  However, consider just an area $A$ of the fracture, and consider a matrix volume, $|x|\leq \sqrt{A}/2$, $|y|\leq \sqrt{A}/2$ and $|z|\leq L$ (a rectangular cuboid), that contains the area $A$ of the fracture plane.  At steady-state, where $T_{f}$ is held fixed at $T_{0}$, and the boundary values of $T_{m}(z=\pm L)$ are fixed at $T_{1}$, the temperature will vary linearly between $T_{0}$ and $T_{1}$.  The heat energy (J.s$^{-1}$) passing from the fracture to the cuboid's planes at $z=\pm L$ is
+To motivate a numerical value for $h$, assume the fracture occupies the $(x, y)$ plane, and assume that the fracture width is tiny compared with any relevant length scales in the matrix (such as the finite-element sizes).  The temperature distribution in the immediate vicinity of the fracture will be complicated in reality.  However, consider just an area $A$ of the fracture, and consider a matrix volume, $|x|\leq \sqrt{A}/2$, $|y|\leq \sqrt{A}/2$ and $|z|\leq L$ (a rectangular cuboid), that contains the area $A$ of the fracture plane.  At steady-state, where $T_{f}$ is held fixed at $T_{0}$, and the boundary values of $T_{m}(z=\pm L)$ are fixed at $T_{1}$, the temperature will vary linearly between $T_{0}$ and $T_{1}$.  The heat energy (J.s$^{-1}$) passing from the fracture to the cuboid's planes at $z=L$ is
 
 \begin{equation}
 A\lambda_{m}^{zz}\frac{\partial}{\partial z} T = A \frac{\lambda_{m}^{zz}}{L} (T_{0} - T_{1}) \ ,
 \end{equation}
 
-where $\lambda_{m}^{zz}$ is the $zz$ component of the thermal-conductivity tensor.  This may be identified with the $Ah(T_{0} - T_{1})$, yielding an expression for $h = \lambda_{m}^{zz}/L$.
+where $\lambda_{m}^{zz}$ is the $zz$ component of the thermal-conductivity tensor.  The same quantify of heat is transferred to the plane at $z=-L$.  These may be identified with the $Ah(T_{0} - T_{1})$, yielding an expression for $h = 2\lambda_{m}^{zz}/L$.
 
 The rectangular cuboid mentioned in the previous paragraph can be identified with a matrix finite element, yielding an estimate of the heat-transfer coefficient appropriate to use in the finite-element setting:
 
 \begin{equation}
-h = \frac{\lambda_{m}^{nn}}{L} \ ,
+h = \frac{2\lambda_{m}^{nn}}{L} \ ,
 \end{equation}
 
 where $\lambda_{nn}$ is the component of the thermal-conductivity tensor normal to the fracture surface, and $L$ is the distance from the fracture to the finite-element node.  This equation was motivated in the same way as the Peaceman borehole TODO_LINK, except that there the situation is a line-source, resulting in a logarithmic steady-state solution.  The above explanation could be generalised to non-cuboid elements in the same way that the Peaceman approach has been, but given the complexity of physical processes "covered up" by the use of the heat-transfer, it is debatable that the generalisation would lead to better agreement with experiments in real systems.
 
-Some readers might be more interested in a physical, rather than mathematical motivation for $h = \lambda_{m}/L$.  It isn't hard to justify $h\propto \lambda_{m}$, for if the matrix thermal conductivity is low, then not much heat will flow between the fracture and the matrix.  Now consider a volume of matrix containing a portion of the fracture.  Fix the temperature on the boundary of this volume.  If the volume is huge ($L$ large) then the heat flux from the fracture will be small, because the gradient of temperature will be small within the volume.  Reducing the size of the element (while keeping the temperature on its boundary fixed) should clearly lead to higher heat flux, because the gradient of temperature is increased.  Therefore, the heat transfer should be proportional to $\lambda_{m}(T_{f}-T_{m})/L$ in a finite element.
+Some readers might be more interested in a physical, rather than mathematical motivation for $h = 2\lambda_{m}/L$.  It isn't hard to justify $h\propto \lambda_{m}$, for if the matrix thermal conductivity is low, then not much heat will flow between the fracture and the matrix.  Now consider a volume of matrix containing a portion of the fracture.  Fix the temperature on the boundary of this volume.  If the volume is huge ($L$ large) then the heat flux from the fracture will be small, because the gradient of temperature will be small within the volume.  Reducing the size of the element (while keeping the temperature on its boundary fixed) should clearly lead to higher heat flux, because the gradient of temperature is increased.  Therefore, the heat transfer should be proportional to $\lambda_{m}(T_{f}-T_{m})/L$ in a finite element.
 
+Finally, notice that if $a A \gg V$, where $A$ is now the fracture area modelled by one finite-element fracture node, and $V$ is the volume modelled by one finite-element matrix node, then the single fracture node can apply a lot of heat to the "small" matrix node, which will likely cause numerical instability if $\Delta t$ is too large, in the multiApp approach.
 
 
 ## A MultiApp primer using the diffusion equation
@@ -194,13 +196,15 @@ One aspect that is not captured in this analysis is stability.  The non-MultiApp
 
 The "fracture" and "matrix" in the previous section were identical spatial domains.  In this section, the diffusion equation is used to explore a mixed-dimensional problem, where the fracture is a 1D line "living inside" the 2D matrix.  In reality, the fracture has a certain thickness, but it is so small that it may be approximated by a 1D line.  This is important when formulating the equation and estimating the heat transfer coefficient, as described above.
 
-### Geometry and mesh - TODO: re-write with above notation
+### Geometry and mesh
 
-There are two cases: "conforming" and "nonconforming".   In the conforming case, all fracture nodes are also matrix nodes: the fracture elements are actually created from a sideset of the 2D matrix elements.  The conforming case is shown in FiguresREF_TODO: the solution domain consists of the `fracture` subdomain (1D red line) and the `matrix` subdomain (in blue), which share nodes.  In the nonconforming case, no fracture nodes coincide with matrix nodes.  The nonconforming case is shown in TODO.
+There are two cases: "conforming" and "nonconforming".   In the conforming case, all fracture nodes are also matrix nodes: the fracture elements are actually created from a sideset of the 2D matrix elements.  The conforming case is shown in FiguresREF_TODO: the solution domain consists of the `fracture` subdomain (1D red line) and the `matrix` subdomain (in blue), which share nodes.  In the nonconforming case, no fracture nodes coincide with matrix nodes.  The nonconforming case is shown in FigureREF_TODO.
 
 ![Image](fracture_diffusion/fracture_diffusion_conforming_geometry.png)
 
 ![Image](fracture_diffusion/fracture_diffusion_conforming_mesh.png)
+
+![Image](fracture_diffusion/fracture_diffusion_nonconforming_mesh.png)
 
 The conforming case is explored using a non-MultiApp approach and a MultiApp approach, while the "nonconforming" case can only be explored using a MultiApp approach.
 
@@ -208,43 +212,36 @@ In all cases, the finite-element mesh dictates the spatial resolution of the num
 
 ### Physics
 
-The two variables, $T_{f}$ and $T_{m}$, are the temperature in the fracture and matrix, respectively.  These are called `frac_T` and `matrix_T` in the MOOSE input files.  Each obeys at diffusion equation, with heat transfer between the two variables, as written in Eqn(1)REF_TODO.
+The two variables, $T_{f}$ and $T_{m}$, are called `frac_T` and `matrix_T` in the MOOSE input files.  Each obeys at diffusion equation, with heat transfer between the two variables, as written in Eqn(1)RE_TODO_eqn.coupled.basic.
 
-However, $T_{f}$ is only defined on the fracture, and $T_{m}$ is only defined on the matrix, and the heat transfer only occurs on the interface between them.  Therefore, in the conforming case, the heat transfer only occurs on the `fracture` subdomain, while in the non-conforming case, the fracture appears as a set of Dirac sources in the `matrix` subdomain.  More precisely, the equation in the matrix domain should be written:
+When using a MultiApp, the fracture appears as a set of Dirac sources in the matrix subdomain:
 
 \begin{equation}
-0 = \dot{T}_{m} - k_{m}\nabla^{2}T_{m} - H\delta(y) \ ,
+0 = c_{m}\dot{T}_{m} - \nabla(\lambda_{m}\nabla T_{m}) - H\delta(f) \ ,
 \end{equation}
 
-where $\delta$ is the Dirac delta function, and $y=0$ is the position of the fracture.  Here,
+where
 
 \begin{equation}
 H = h(T_{f} - T_{m}) \ .
 \end{equation}
 
-This leads naturally to the MultiApp approach: $H$ is generated as an `AuxVariable` by the `fracture` App, so exists only in the `fracture` subdomain.  It is then passed to the `matrix` App, and applied as a `DiracKernel`.
+In the MultiApp approach, $H$ is generated as an `AuxVariable` by the `fracture` App, so exists only in the `fracture` subdomain.  It is then passed to the `matrix` App, and applied as a `DiracKernel`.
 
 The boundary conditions are "no flow", except for the very left-hand side of the fracture domain, where temperature is fixed at $T_{f} = 1$.  The initial conditions are $T_{m} = 0 = T_{f}$.
 
-The diffusion coefficient in the fracture is $k_{f} = 1.0$, and is $k_{m} = 10^{-3}$ in the matrix.  The heat transfer coefficient is $h=10^{-3}$.
+Each of the heat capacities are unity, $c_{m} = 1 = c_{f}$, the conductivity in the fracture is $\lambda_{f} = 1.0$, and is $\lambda_{m} = 10^{-3}$ in the matrix.  The fracure has aperture $a=1E-2$.
 
-Each simulation runs with `end_time = 50`.
-
-It is important to understand the mathematical meaning of the heat transfer coefficient, $h$, in this context.  **It must be set proportional to the fracture aperture.**  This is explained in TODO_REF_OTHER_FRACTURE_DOCO.  As further illustration, consider the MultiApp approach without diffusion.  Denote the known temperature values at the start of a time-step by $T_{f}^{0}$ and $T_{m}^{0}$, and those at the end by $T_{f}^{1}$ and $T_{m}^{1}$, which are the unknown values for this time-step.  The fracture equation reads
+The arguments made above suggest that $h = 2\lambda_{m}/L$ is an appropriate choice for matrix elements containing the fracture, where $L/2$ is the distance from the fracture to the matrix node.  However, this doesn't make sense for the conforming case, where the distance between matrix and fracture nodes is zero, so $L=0$.  In fact, the derivation of $h=2\lambda_{m}/L$ explicitly assumed that the fracture width was tiny compared with $L$.  Extending the derivation to include this case, suggests that
 
 \begin{equation}
-\frac{T_{f}^{1} - T_{f}^{0}}{\Delta t} = h (T_{m}^{0} - T_{f}^{1}) \ .
+h = \frac{2\lambda_{m}^{nn}}{L + L_{0}} \ .
 \end{equation}
 
-The heat-rate from each fracture node is $h(T_{m}^{0} - T_{f}^{1})V_{f}$, where $L_{f}$ is the "volume" modelled by the fracture node.  Since this is a 1D fracture, $L_{f}$ is actually a length, which is numerically equal to half the sum of the lengths of the elements joined to the node.  This heat-rate gets applied to the appropriate matrix nodes: the equation reads
+Here we choose $L_{0} = 0.1$, which is the half the size of a matrix element.  Hence, for the conforming case (where $L=0$) $h=0.02$, while for the non-conforming case (where $L=0.1$) $h=0.01$.
 
-\begin{equation}
-\frac{T_{m}^{1} - T_{m}^{0}}{\Delta t} = h (T_{f}^{1} - T_{m}^{0}) \frac{L_{f}}{A_{m}} \ ,
-\end{equation}
 
-where $A_{m}$ is the "volume" modelled by the matrix node (actually an area in this 2D situation).  For this to be physically consistent, $h$ must contain information about the fracture aperture, for the hot material in the fracture provides heat at the rate given above, which obviously increases linearly with fracture aperture.
-
-Finally, notice that if $W_{f}L_{f} \gg A_{m}$ then the "large" fracture node (modelling width $W_{f}$ and length $L_{f}$) can apply a lot of heat to the "small" matrix node, which causes numerical instability if $\Delta t$ is too large.
+Each simulation runs with `end_time = 100`.
 
 
 ### No MultiApp: the benchmark
@@ -253,11 +250,11 @@ In the conforming case, a MultiApp approach need not be taken, and the Kernels a
 
 TODO listing fracture_diffusion/no_multiapp.i block=Kernels
 
-The matrix temperature is shown in FigureTODO_REF
+Evaluating the `fromFracture` heat transfer Kernel only on `block = fracture` implements the Dirac delta function $\delta(f)$ in Eqn(1)RE_TODO_eqn.coupled.basic.  The matrix temperature is shown in FigureTODO_REF
 
 ![Image](fracture_diffusion/no_multiapp_matrix_T.png)
 
-The solution produced by MOOSE depends upon time-step size.  Some examples are shown in FigureTODO_REF.  Evidently, reducing the time-step below 1.0 does not impact the solution very much.  Hence, the solution using $\Delta t = 0.0625$ is used as the *benchmark* for the remainder of this section.
+The solution produced by MOOSE depends upon time-step size.  Some examples are shown in FigureTODO_REF.  Evidently, reducing the time-step below 10.0 does not impact the solution very much.  Hence, the solution using $\Delta t = 0.125$ is used as the *benchmark* for the remainder of this section.
 
 ![Image](fracture_diffusion/no_multiapp_frac_T.png)
 
@@ -287,10 +284,13 @@ TODO listing fracture_diffusion/matrix_app_dirac.i block=DiracKernels
 
 ### A MultiApp approach for the nonconforming case
 
-TODO
+This is identical to the conforming case except:
+
+- the matrix mesh is nonconforming, as shown above
+- the heat transfer coefficient is different, as described above
 
 ### Results
 
-The L2 error of the fracture temperature in each approach (square-root of the sum of squares of differences between the $T_{f}$ and the benchmark result) is plotted below.  As expected, the error is proportional to $\Delta t$.  The error when using the MultiApp approaches is larger than the non-MultiApp approach, because $T_{f}$ is fixed when $T_{m}$ is being solved for, and vice versa.
+The L2 error of the fracture temperature in each approach (square-root of the sum of squares of differences between the $T_{f}$ and the benchmark result) is plotted below.  As expected, the error is proportional to $\Delta t$.  The error when using the MultiApp approaches is larger than the non-MultiApp approach, because $T_{f}$ is fixed when $T_{m}$ is being solved for, and vice versa.  The conforming and nonconforming cases produce similar results for larger time-steps, but as the time-step size reduces the results are slightly different, just because of the small differences in the effective finite-element discretisation.
 
 ![Image](fracture_diffusion/l2_error.png)

@@ -2,9 +2,9 @@
   [generate]
     type = GeneratedMeshGenerator
     dim = 1
-    nx = 30
+    nx = 20
     xmin = 0
-    xmax = 30.0
+    xmax = 10.0
   []
 []
 
@@ -30,19 +30,21 @@
 []
 
 [Kernels]
-  [dot]
-    type = TimeDerivative
+  [dot_frac_T]
+    type = CoefTimeDerivative
+    Coefficient = 1E-2
     variable = frac_T
   []
   [fracture_diffusion]
-    type = Diffusion
+    type = AnisotropicDiffusion
     variable = frac_T
+    tensor_coeff = '1E-2 0 0 0 1E-2 0 0 0 1E-2'
   []
   [toMatrix]
     type = PorousFlowHeatMassTransfer
     variable = frac_T
     v = transferred_matrix_T
-    transfer_coefficient = 1E-2
+    transfer_coefficient = 0.02
     save_in = joules_per_s
   []
 []
@@ -72,8 +74,8 @@
 [Executioner]
   type = Transient
   solve_type = NEWTON
-  dt = 1
-  end_time = 50
+  dt = 100
+  end_time = 100
   nl_rel_tol = 1e-8
   petsc_options_iname = '-pc_type  -pc_factor_mat_solver_package'
   petsc_options_value = 'lu        superlu_dist'

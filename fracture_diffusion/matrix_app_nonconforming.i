@@ -5,9 +5,9 @@
     nx = 20
     xmin = 0
     xmax = 10.0
-    ny = 20 # anything less than this produces over/under-shoots
-    ymin = -2
-    ymax = 2
+    ny = 20
+    ymin = -1.9
+    ymax = 2.1
   []
 []
 
@@ -56,27 +56,22 @@
 [Executioner]
   type = Transient
   solve_type = NEWTON
-  dt = 100
+  dt = 2
   end_time = 100
-  nl_rel_tol = 1e-8
-  petsc_options_iname = '-pc_type  -pc_factor_mat_solver_package'
-  petsc_options_value = 'lu        superlu_dist'
 []
 
 
 [Outputs]
   print_linear_residuals = false
   exodus = true
-  csv=true
 []
 
 [MultiApps]
   [fracture_app]
     type = TransientMultiApp
     input_files = fracture_app_dirac.i
+    cli_args = 'Kernels/toMatrix/transfer_coefficient=0.01'
     execute_on = TIMESTEP_BEGIN
-#    sub_cycling = true
-#    interpolate_transfers = true
   []
 []
 
