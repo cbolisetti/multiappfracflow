@@ -103,7 +103,10 @@ TODO: listing single_var.i
 
 The result depends on the spatial and temporal discretisation.  The temporal-discretisation dependence is shown below:
 
-![Image](diffusion_multiapp/single_var.png)
+!media media/diffusion_single_var.png
+	style=width:40%;margin:auto;padding-top:2.5%;
+	id=fig0
+	caption=??
 
 ### Two coupled variables (no MultiApp)
 
@@ -113,7 +116,10 @@ TODO: listing two_vars.i
 
 The result depends on the spatial and temporal discretisation.  The temporal-discretisation dependence is shown below.  Notice that the matrix has removed heat from the fracture, so the temperature is decreased compared with the $h=0$ case.
 
-![Image](diffusion_multiapp/two_vars.png)
+!media media/diffusion_two_vars.png
+	style=width:40%;margin:auto;padding-top:2.5%;
+	id=fig1
+	caption=??
 
 ### A MultiApp approach
 
@@ -149,7 +155,10 @@ TODO listing matrix_app_heat.i start=[fromFrac] end=[]
 
 A couple of subtleties are that the `CoupledForce` Kernel will smooth the nodal `heat_to_matrix` AuxVariable (since it uses quad-point values) and that a `save_in` cannot be employed in the `frac_app_heat.i` input file [PorousFlowHeatMassTransfer](PorousFlowHeatMassTransfer.md) Kernel (since that would include the nodal volume).  The results are:
 
-![Image](diffusion_multiapp/fracture_app_heat.png)
+!media media/fracture_app_heat.png
+	style=width:40%;margin:auto;padding-top:2.5%;
+	id=fig1
+	caption=??
 
 #### Transfer of temperature ("T" MultiApp)
 
@@ -174,7 +183,10 @@ TODO listing fracture_app_heat.i start=[toMatrix] end=[]
 
 The results are:
 
-![Image](diffusion_multiapp/fracture_app.png)
+!media media/fracture_app.png
+	style=width:40%;margin:auto;padding-top:2.5%;
+	id=fig1
+	caption=??
 
 ### Error in each approach
 
@@ -184,7 +196,10 @@ The L2 error in each approach (square-root of the sum of squares of differences 
 \mathrm{L2 error} \propto \mathrm{d}t \ .
 \end{equation}
 
-![Image](diffusion_multiapp/l2_error.png)
+!media media/diffusion_l2_error.png
+	style=width:40%;margin:auto;padding-top:2.5%;
+	id=fig1
+	caption=??
 
 ### Final remarks on stability
 
@@ -200,11 +215,20 @@ The "fracture" and "matrix" in the previous section were identical spatial domai
 
 There are two cases: "conforming" and "nonconforming".   In the conforming case, all fracture nodes are also matrix nodes: the fracture elements are actually created from a sideset of the 2D matrix elements.  The conforming case is shown in FiguresREF_TODO: the solution domain consists of the `fracture` subdomain (1D red line) and the `matrix` subdomain (in blue), which share nodes.  In the nonconforming case, no fracture nodes coincide with matrix nodes.  The nonconforming case is shown in FigureREF_TODO.
 
-![Image](fracture_diffusion/fracture_diffusion_conforming_geometry.png)
+!media media/fracture_diffusion_conforming_geometry.png
+	style=width:40%;margin:auto;padding-top:2.5%;
+	id=fig1
+	caption=??
 
-![Image](fracture_diffusion/fracture_diffusion_conforming_mesh.png)
+!media media/fracture_diffusion_conforming_mesh.png
+	style=width:40%;margin:auto;padding-top:2.5%;
+	id=fig1
+	caption=??
 
-![Image](fracture_diffusion/fracture_diffusion_nonconforming_mesh.png)
+!media media/fracture_diffusion_nonconforming_mesh.png
+	style=width:40%;margin:auto;padding-top:2.5%;
+	id=fig1
+	caption=??
 
 The conforming case is explored using a non-MultiApp approach and a MultiApp approach, while the "nonconforming" case can only be explored using a MultiApp approach.
 
@@ -252,11 +276,17 @@ TODO listing fracture_diffusion/no_multiapp.i block=Kernels
 
 Evaluating the `fromFracture` heat transfer Kernel only on `block = fracture` implements the Dirac delta function $\delta(f)$ in Eqn(1)RE_TODO_eqn.coupled.basic.  The matrix temperature is shown in FigureTODO_REF
 
-![Image](fracture_diffusion/no_multiapp_matrix_T.png)
+!media media/no_multiapp_matrix_T.png
+	style=width:40%;margin:auto;padding-top:2.5%;
+	id=fig1
+	caption=??
 
 The solution produced by MOOSE depends upon time-step size.  Some examples are shown in FigureTODO_REF.  Evidently, reducing the time-step below 10.0 does not impact the solution very much.  Hence, the solution using $\Delta t = 0.125$ is used as the *benchmark* for the remainder of this section.
 
-![Image](fracture_diffusion/no_multiapp_frac_T.png)
+!media media/no_multiapp_frac_T.png
+	style=width:40%;margin:auto;padding-top:2.5%;
+	id=fig1
+	caption=??
 
 ### A MultiApp approach for the conforming case
 
@@ -293,4 +323,7 @@ This is identical to the conforming case except:
 
 The L2 error of the fracture temperature in each approach (square-root of the sum of squares of differences between the $T_{f}$ and the benchmark result) is plotted below.  As expected, the error is proportional to $\Delta t$.  The error when using the MultiApp approaches is larger than the non-MultiApp approach, because $T_{f}$ is fixed when $T_{m}$ is being solved for, and vice versa.  The conforming and nonconforming cases produce similar results for larger time-steps, but as the time-step size reduces the results are slightly different, just because of the small differences in the effective finite-element discretisation.
 
-![Image](fracture_diffusion/l2_error.png)
+!media media/frac_l2_error.png
+	style=width:40%;margin:auto;padding-top:2.5%;
+	id=fig1
+	caption=??

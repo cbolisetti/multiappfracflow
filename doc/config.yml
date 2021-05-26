@@ -1,0 +1,28 @@
+Content:
+  - ${ROOT_DIR}/diffusion_multiapp
+  - ${ROOT_DIR}/fracture_diffusion
+  - ${ROOT_DIR}/doc/content
+  - ${MOOSE_DIR}/framework/doc/content
+
+Renderer:
+  type: MooseDocs.base.MaterializeRenderer
+
+
+Extensions:
+  MooseDocs.extensions.navigation:
+    name: multiappfractureflow
+    home: https://mooseframework.inl.gov/
+
+  MooseDocs.extensions.appsyntax:
+  
+  MooseDocs.extensions.common:
+    shortcuts: !include ${MOOSE_DIR}/framework/doc/globals.yml
+
+  MooseDocs.extensions.acronym:
+    acronyms: !include ${MOOSE_DIR}/framework/doc/acronyms.yml
+
+  MooseDocs.extensions.template:
+        active: True
+
+  MooseDocs.extensions.sqa:
+      active: False
