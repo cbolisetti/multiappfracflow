@@ -99,7 +99,7 @@ T_{m}(t, x) &= \frac{1 - e^{-2ht}}{4\sqrt{\pi t}}\exp\left(-\frac{x^{2}}{4t}\rig
 
 When $h=0$, the system becomes decoupled.  The solution is $T_{m} = 0$, and $T_{f}$ given by the fundamental solution.  This may be solved by MOOSE without any MultiApp system using the following input file
 
-TODO: listing single_var.i
+!listing diffusion_multiapp/single_var.i
 
 The result depends on the spatial and temporal discretisation.  The temporal-discretisation dependence is shown below:
 
@@ -112,7 +112,7 @@ The result depends on the spatial and temporal discretisation.  The temporal-dis
 
 The system is coupled when $h\neq 0$.  A MultiApp approach is not strictly needed in this case, because there are no meshing problems: the domain is just the real line.  Hence, the system may be solved by MOOSE using the following input file
 
-TODO: listing two_vars.i
+!listing diffusion_multiapp/two_vars.i
 
 The result depends on the spatial and temporal discretisation.  The temporal-discretisation dependence is shown below.  Notice that the matrix has removed heat from the fracture, so the temperature is decreased compared with the $h=0$ case.
 
@@ -143,15 +143,15 @@ In order to conserve heat energy, the following approach may be used
 
 This is implemented using the following `AuxKernel` in the fracture App:
 
-TODO listing fracture_app_heat.i block=AuxKernels
+!listing diffusion_multiapp/fracture_app_heat.i block=AuxKernels
 
 along with the following Transfers:
 
-TODO listing fracture_app_heat.i block=Transfers
+!listing diffusion_multiapp/fracture_app_heat.i block=Transfers
 
 and the `Kernel` in the matrix App:
 
-TODO listing matrix_app_heat.i start=[fromFrac] end=[]
+!listing diffusion_multiapp/matrix_app_heat.i start=[fromFrac] end=[]
 
 A couple of subtleties are that the `CoupledForce` Kernel will smooth the nodal `heat_to_matrix` AuxVariable (since it uses quad-point values) and that a `save_in` cannot be employed in the `frac_app_heat.i` input file [PorousFlowHeatMassTransfer](PorousFlowHeatMassTransfer.md) Kernel (since that would include the nodal volume).  The results are:
 
@@ -171,15 +171,15 @@ An alternative approach is to transfer $T_{m}$ and $T_{f}$:
 
 The disadvantage of this approach is that it doesn't conserve heat energy, however, the advantage is that the original differential equations are clearly evident.  Given that the error of using a MultiApp is $\Delta t$ irrespective of the type of Transfer implemented, the non-conservation of heat energy, which is also proportional to $\Delta t$, is probably not of critical importance.  This idea is implemented using the following `Kernel` in the fracture App:
 
-TODO listing fracture_app.i start=[toMatrix] end=[]
+!listing diffusion_multiapp/fracture_app.i start=[toMatrix] end=[]
 
 along with the following Transfers:
 
-TODO listing fracture_app.i block=Transfers
+!listing diffusion_multiapp/fracture_app.i block=Transfers
 
 and the `Kernel` in the matrix App:
 
-TODO listing fracture_app_heat.i start=[toMatrix] end=[]
+!listing diffusion_multiapp/fracture_app_heat.i start=[toMatrix] end=[]
 
 The results are:
 
@@ -272,7 +272,7 @@ Each simulation runs with `end_time = 100`.
 
 In the conforming case, a MultiApp approach need not be taken, and the Kernels are:
 
-TODO listing fracture_diffusion/no_multiapp.i block=Kernels
+!listing fracture_diffusion/no_multiapp.i block=Kernels
 
 Evaluating the `fromFracture` heat transfer Kernel only on `block = fracture` implements the Dirac delta function $\delta(f)$ in Eqn(1)RE_TODO_eqn.coupled.basic.  The matrix temperature is shown in FigureTODO_REF
 
@@ -296,21 +296,21 @@ In this case, the matrix App is the main App, and the fracture App is the subApp
 
 - An `AuxVariable` called `joules_per_s` that is the heat rate coming from each node.  Mathematically this is $h(T_{f} - T_{m})L$, where $L$ is the "volume" modelled by the fracture node.  This is populated by the `save_in` feature:
 
-TODO listing fracture_diffusion/fracture_app_dirac.i block=Kernels
+!listing fracture_diffusion/fracture_app_dirac.i block=Kernels
 
 - A `NodalValueSampler` `VectorPostprocessor` that captures all the `joules_per_s` values at each fracture node
 
-TODO listing fracture_diffusion/fracture_app_dirac.i block=VectorPostprocessors
+!listing fracture_diffusion/fracture_app_dirac.i block=VectorPostprocessors
 
 The matrix input file has the following features
 
 - Transfers that send $T_{m}$ to the fracture App, and receive the `joules_per_s` from the fracture App
 
-TODO listing fracture_diffusion/matrix_app_dirac.i block=Transfers
+!listing fracture_diffusion/matrix_app_dirac.i block=Transfers
 
 - This latter `Transfer` writes its information into a `VectorPostprocessor` in the matrix App.  That is then converted to a Dirac source by a `VectorPostprocessorPointSource` `DiracKernel`:
 
-TODO listing fracture_diffusion/matrix_app_dirac.i block=DiracKernels
+!listing fracture_diffusion/matrix_app_dirac.i block=DiracKernels
 
 ### A MultiApp approach for the nonconforming case
 
