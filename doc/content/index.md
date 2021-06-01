@@ -214,8 +214,9 @@ where $\delta$ is the Dirac delta functions.  These conditions make the analytic
 Physically, this system represents the situation in which the $T_{f}$ system is initially provided with a unit of heat energy at $x=0$, and that heat energy is allowed to disperse under diffusion, and transfer to the $T_{m}$ system, which also disperses it.  To derive the solution, the sum of the two governing equations yields the standard diffusion equation (which may be solved using the [fundamental solution](https://en.wikipedia.org/wiki/Heat_equation)), while the difference yields the diffusion equation augmented with a decay term.  The final result is:
 \begin{equation}
 \begin{aligned}
+\label{eqn.analytical.pulse}
 T_{f}(t, x) &= \frac{1 + e^{-2ht}}{4\sqrt{\pi t}}\exp\left(-\frac{x^{2}}{4t}\right) \ , \\
-T_{m}(t, x) &= \frac{1 - e^{-2ht}}{4\sqrt{\pi t}}\exp\left(-\frac{x^{2}}{4t}\right) \ , \\
+T_{m}(t, x) &= \frac{1 - e^{-2ht}}{4\sqrt{\pi t}}\exp\left(-\frac{x^{2}}{4t}\right) \ .
 \end{aligned}
 \end{equation}
 
@@ -225,12 +226,12 @@ When $h=0$, the system becomes decoupled.  The solution is $T_{m} = 0$, and $T_{
 
 !listing diffusion_multiapp/single_var.i
 
-The result depends on the spatial and temporal discretisation.  The temporal-discretisation dependence is shown below:
+The result depends on the spatial and temporal discretisation.  The temporal-discretisation dependence is shown in [diffusion_single_var]
 
 !media media/diffusion_single_var.png
-	style=width:40%;margin:auto;padding-top:2.5%;
-	id=fig0
-	caption=??
+	style=width:60%;margin:auto;padding-top:2.5%;
+	id=diffusion_single_var
+	caption=Decoupled case: comparison of the analytical solution with the MOOSE results as computed using no MultiApp
 
 ### Two coupled variables (no MultiApp)
 
@@ -238,12 +239,12 @@ The system is coupled when $h\neq 0$.  A MultiApp approach is not strictly neede
 
 !listing diffusion_multiapp/two_vars.i
 
-The result depends on the spatial and temporal discretisation.  The temporal-discretisation dependence is shown below.  Notice that the matrix has removed heat from the fracture, so the temperature is decreased compared with the $h=0$ case.
+The result depends on the spatial and temporal discretisation.  The temporal-discretisation dependence is shown in [diffusion_two_vars].  Notice that the matrix has removed heat from the fracture, so the temperature is decreased compared with the $h=0$ case.
 
 !media media/diffusion_two_vars.png
-	style=width:40%;margin:auto;padding-top:2.5%;
-	id=fig1
-	caption=??
+	style=width:60%;margin:auto;padding-top:2.5%;
+	id=diffusion_two_vars
+	caption=Coupled case: comparison of the analytical solution with the MOOSE results as computed using no MultiApp
 
 ### A MultiApp approach
 
@@ -277,12 +278,12 @@ and the `Kernel` in the matrix App:
 
 !listing diffusion_multiapp/matrix_app_heat.i start=[fromFrac] end=[]
 
-A couple of subtleties are that the `CoupledForce` Kernel will smooth the nodal `heat_to_matrix` AuxVariable (since it uses quad-point values) and that a `save_in` cannot be employed in the `frac_app_heat.i` input file [PorousFlowHeatMassTransfer](PorousFlowHeatMassTransfer.md) Kernel (since that would include the nodal volume).  The results are:
+A couple of subtleties are that the `CoupledForce` Kernel will smooth the nodal `heat_to_matrix` AuxVariable (since it uses quad-point values) and that a `save_in` cannot be employed in the `frac_app_heat.i` input file [PorousFlowHeatMassTransfer](PorousFlowHeatMassTransfer.md) Kernel (since that would include the nodal volume).  The results are shown in [fracture_app_heat].
 
 !media media/fracture_app_heat.png
-	style=width:40%;margin:auto;padding-top:2.5%;
-	id=fig1
-	caption=??
+	style=width:60%;margin:auto;padding-top:2.5%;
+	id=fracture_app_heat
+	caption=Coupled case: comparison of the analytical solution with the MOOSE results as computed using a "heat" MultiApp
 
 #### Transfer of temperature ("T" MultiApp)
 
@@ -305,25 +306,25 @@ and the `Kernel` in the matrix App:
 
 !listing diffusion_multiapp/fracture_app_heat.i start=[toMatrix] end=[]
 
-The results are:
+The results are shown in [fracture_app].
 
 !media media/fracture_app.png
-	style=width:40%;margin:auto;padding-top:2.5%;
-	id=fig1
-	caption=??
+	style=width:60%;margin:auto;padding-top:2.5%;
+	id=fracture_app
+	caption=Coupled case: comparison of the analytical solution with the MOOSE results as computed using a "T" MultiApp
 
 ### Error in each approach
 
-The L2 error in each approach (square-root of the sum of squares of differences between the MOOSE result and the analytical result) is plotted below.  The errors are very similar for each of the models explored in this section.  The magnitude of the error is largely unimportant: the scaling with time-step size is more crucial, and in this case it follows the [expected first-order result](https://web.mit.edu/10.001/Web/Course_Notes/Differential_Equations_Notes/node3.html).
+The L2 error in each approach (square-root of the sum of squares of differences between the MOOSE result and the analytical result) is plotted in [diffusion_l2_error].  The errors are very similar for each of the models explored in this section.  The magnitude of the error is largely unimportant: the scaling with time-step size is more crucial, and in this case it follows the [expected first-order result](https://web.mit.edu/10.001/Web/Course_Notes/Differential_Equations_Notes/node3.html).
 
 \begin{equation}
 \mathrm{L2 error} \propto \mathrm{d}t \ .
 \end{equation}
 
 !media media/diffusion_l2_error.png
-	style=width:40%;margin:auto;padding-top:2.5%;
-	id=fig1
-	caption=??
+	style=width:60%;margin:auto;padding-top:2.5%;
+	id=diffusion_l2_error
+	caption=L2 error of each approach as a function of time-step size
 
 ### Final remarks on stability
 
@@ -347,12 +348,12 @@ Two cases are explored: "conforming" and "nonconforming".   In the conforming ca
 !media media/fracture_diffusion_conforming_mesh.png
 	style=width:60%;margin:auto;padding-top:2.5%;
 	id=fracture_diffusion_conforming_mesh
-	caption=The mesh in the conforming case
+	caption=The matrix mesh in the conforming case
 
 !media media/fracture_diffusion_nonconforming_mesh.png
 	style=width:60%;margin:auto;padding-top:2.5%;
 	id=fracture_diffusion_nonconforming_mesh
-	caption=The mesh in the nonconforming case
+	caption=The matrix mesh in the nonconforming case, where the red line is the fracture
 
 The conforming case is explored using a non-MultiApp approach and a MultiApp approach, while the nonconforming case can only be explored using a MultiApp approach.
 
@@ -444,3 +445,46 @@ The L2 error of the fracture temperature in each approach (square-root of the su
 	style=width:60%;margin:auto;padding-top:2.5%;
 	id=frac_l2_error
 	caption=L2 error of each approach to modelling the mixed-dimensional diffusion equation
+
+## Porous flow in a single matrix system
+
+The previous section may be extended to the Porous Flow setting.  As above, consider a single 1D planar fracture within a 2D mesh.  Fluid flows along the fracture according to Darcy's equation, so may be modelled using [PorousFlowFullySaturated](PorousFlowFullySaturated.md)
+
+!listing single_fracture_heat_transfer/fracture_app.i block=PorousFlowFullySaturated
+
+[Kuzmin-Turek](kt.md) stabilization is used to minimise numerical diffusion.  The following assumptions are used.
+
+- The fracture aperture is $10^{-2}\,$m, and its porosity is $1$.  Therefore, the porosity required by PorousFlow is $a\phi = 10^{-2}$.
+- The permeability is given by the $a^{2}/12$ formula, modified by a roughness coefficient, $r$, so the permeability required by PorousFlow is $a^{3}*r/12 = 10^{-8}$.
+- The fracture is basically filled with water, so the internal energy of any rock material within it may be ignored.
+- The thermal conductivity in the fracture is dominated by the water (which has thermal conductivity 0.6$\,$W.m$^{-1}$.K$^{-1}$), so the thermal conductivity required by PorousFlow is $0.6\times 10^{-2}$.
+
+Hence, the Materials are
+
+!listing single_fracture_heat_transfer/fracture_app.i block=Materials
+
+The heat transfer between the fracture and matrix is encoded in the usual way.  The heat transfer coefficient is chosen to be 100, just so that an appreciable amount of heat energy is transferred, not because this is a realistic transfer coefficient for this case:
+
+!listing single_fracture_heat_transfer/fracture_app.i block=Kernels
+
+The boundary conditions correspond to injection of 100$^{\circ}$C water at a rate of 10$\,$kg.s$^{-1}$ at the left side of the model, and withdrawal of water at the same rate (and whatever temperature it is extracted at) at the right side:
+
+!listing single_fracture_heat_transfer/fracture_app.i start=left_injection end=[]
+
+!listing single_fracture_heat_transfer/fracture_app.i block=BCs
+
+The physics in the matrix is assumed to be the simple heat equation.  Note that this has no stabilization, so there are overshoots and undershoots in the solution.
+
+!listing single_fracture_heat_transfer/matrix_app.i block=Kernels
+
+After 100$\,$s of simulation, the matrix temperature is shown in [single_fracture_heat_transfer_final_matrix_T].  The evolution of the temperatures is shown in [single_fracture_heat_transfer_T].  Without any heat transfer, the fracture heats up to 100$^{\circ}$C, but when the fracture transfers heat energy to the matrix, the temperature evolution is retarded.
+
+!media media/single_fracture_heat_transfer_final_matrix_T.png
+	style=width:60%;margin:auto;padding-top:2.5%;
+	id=single_fracture_heat_transfer_final_matrix_T
+	caption=Heat conduction into the matrix (the matrix mesh is shown)
+
+!media media/single_fracture_heat_transfer_T.mp4
+	style=width:60%;margin:auto;padding-top:2.5%;
+	id=single_fracture_heat_transfer_T
+	caption=Temperature along the fracture, with heat transfer to the matrix and without heat transfer to the matrix.  Fluid at 100degC is injected into the fracture at its left end, and fluid is withdrawn at the right end.  With heat transfer, the matrix heats up a little.

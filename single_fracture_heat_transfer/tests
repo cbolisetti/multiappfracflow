@@ -1,0 +1,12 @@
+[Tests]
+  [sim]
+    type = CSVDiff
+    input = matrix_app.i
+    csvdiff = matrix_app_out_fracture_app0_frac_frac_0001.csv
+    cli_args = 'Executioner/dt=100'
+    threading = '!pthreads'
+    issues = '#17928'
+    design = 'multiapp_flow_through_fractured_media.md'
+    requirement = 'PorousFlow shall be able to simulate flow and solute transport along a fracture embedded in a porous matrix, using a MultiApp approach'
+  []
+[]
