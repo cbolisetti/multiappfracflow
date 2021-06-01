@@ -1,0 +1,66 @@
+reset
+
+create surface ellipse major radius 100 minor radius 70 zplane
+create surface ellipse major radius 100 minor radius 70 zplane
+
+
+move Surface 1 x 40 include_merged
+move Surface 2 x 40 y -40 include_merged
+
+
+rotate Surface 1 angle 15 about Y include_merged
+rotate Surface 2 angle -15 about Y include_merged
+rotate Surface 2 angle -35 about X include_merged
+
+#webcut Volume 1 tool Body 2
+
+webcut volume 2 with sheet extended from surface 1
+
+webcut volume 1 with sheet extended from surface 3
+
+split curve 5 at vertex 10
+
+split curve 7 at vertex 3
+
+merge all
+
+split curve 3 at vertex 7
+
+split curve 9 at vertex 3
+
+merge all
+
+
+create surface ellipse major radius 100 minor radius 70 zplane
+create surface ellipse major radius 100 minor radius 70 zplane
+create surface ellipse major radius 100 minor radius 70 zplane
+create surface ellipse major radius 100 minor radius 70 zplane
+create surface ellipse major radius 100 minor radius 70 zplane
+
+rotate Surface 9 angle -25 about X include_merged
+rotate Surface 10 angle -6 about X include_merged
+rotate Surface 11 angle 25 about X include_merged
+
+move Surface 7 x -40 y 40 z 40 include_merged
+move Surface 8 x -0 y 0 z -40 include_merged
+move Surface 9 x -0 y 150 z 0 include_merged
+move Surface 10 x -0 y -150 z 0 include_merged
+move Surface 11 x -0 y 150 z 0 include_merged
+
+webcut volume 7  with sheet extended from surface 11
+webcut volume 9  with sheet extended from surface 13  
+merge all
+
+surface all Scheme TriMesh 
+surface all size 5
+mesh surface all
+
+set large exodus on
+export mesh "/Users/mundlb/Desktop/ellipseNetwork.e" overwrite
+
+
+#{i=1}
+#{Loop(3)}
+  #{i++}
+  #webcut volume all with sheet extended from surface in volume {i}
+#{EndLoop}
