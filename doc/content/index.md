@@ -1,11 +1,9 @@
 # Fracture flow using a MultiApp approach
 
-PorousFlow can be used to simulate flow through fractured porous media.  The fundamental premise is:
+PorousFlow can be used to simulate flow through fractured porous media.  The fundamental premise is *the fractures can be considered as lower dimensional entities within the higher-dimensional porous media*.  This has two consequences.
 
-- The fractures can be considered as lower dimensional entities within the higher-dimensional porous media.  This has two consequences.
-
-  - Meshing is often simplified and computational speed increased.
-  - The fractures do not provide a barrier to flow in their normal direction.  In fact, flows (of both mass and heat) in the normal direction do not even see the fracture as they move through the porous media.  This is certainly true if the fractures have very small width (as befits a lower-dimensional entity) and flow through it is substantially faster than the flow through the porous media.
+- Meshing is often simplified and computational speed increased.
+- The fractures do not provide a barrier to flow in their normal direction.  In fact, flows (of both mass and heat) in the normal direction do not even see the fracture as they move through the porous media.  This is certainly true if the fractures have very small width (as befits a lower-dimensional entity) and flow through it is substantially faster than the flow through the porous media.
 
 A related page TODO_link describes how to simulate porous flow in fractured porous media, assuming that the fractures can be incorporated directly into the mesh as lower dimensional elements, for instance, as 2D "fracture" elements inside a 3D "matrix" mesh.  Unfortunately, realistic fracture networks have such complicated geometry that meshing them is difficult, while incorporating their mesh directly into a higher-dimensional mesh is almost impossible.  In this page, it is illustrated that MOOSE's MultiApp system may be employed to solve this problem: the "fracture" mesh is governed by one App, which is seperate from the "matrix" mesh that is governed by another App.
 
@@ -63,6 +61,7 @@ Heat-transfer coefficients have been used by engineers to accurately account for
 To motivate a numerical value for $h$, assume that the fracture width is tiny compared with any relevant length scales in the matrix (such as the finite-element sizes).  While the temperature distribution in the immediate vicinity of the fracture will be governed by complicated processes, the point of $h$ is to hide that complexity.  Assume there is a "skin" around the fracture in which the complicated processes occur.  Denote the temperature just outside this skin by $T_{s}$, so the heat transfer through the skin is
 
 \begin{equation}
+\label{heat.transfer.skin}
 Q_{s} = h_{\mathrm{s}}(T_{f} - T_{s}) \ ,
 \end{equation}
 where $T_{f}$ is the fracture temperature, $h_{\mathrm{s}}$ is the heat-transfer coefficient of the skin, with SI units J.m$^{-2}$.s$^{-1}$.K$^{-1}$, and $Q_{s}$ is the heat flux, with SI units J.s$^{-1}$.m$^{-2}$.
@@ -92,7 +91,7 @@ Notice that the prefactors $L_{1}/(L_{0}+L_{1})$ are exactly what a linear-lagra
 h = \frac{h_{\mathrm{s}}\lambda (L_{0} + L_{1})}{h_{\mathrm{s}}L_{0}L_{1} + \lambda(L_{0} + L_{1})} \ .
 \end{equation}
 
-This may be generalised to the 2D-3D situation, with an arbitrary-shaped element containing a portion of a fracture.  Obviously the heat flows to each node, and hence $h$, depend on the shape of the element.  However, following the approach of the Peaceman borehole TODO_LINK, the following rule-of-thumb is suggested for MOOSE simulations:
+This may be generalised to the 2D-3D situation.  While [skin_two_nodes] is only a 1D picture, flow from the fracture to the matrix only occurs in the normal direction, so it also represents the 2D-3D situation.  With an arbitrary-shaped element containing a portion of a fracture, the heat flows to each node, and hence $h$, depend on the shape of the element.  However, following the approach of the Peaceman borehole TODO_LINK, the following rule-of-thumb is suggested for MOOSE simulations:
 
 \begin{equation}
 \label{eqn.suggested.h}
@@ -109,15 +108,86 @@ Finally, notice that if $a A \gg V$, where $A$ is now the fracture area modelled
 
 ## Mass flow
 
-TODO
+A "mass-transfer coefficient" $h^{\mathrm{mass}}$ may be used to model fluid mass transfer between the fracture and matrix.  The equations for all fluid phases are structurally identical, but just have different numerical values for viscosity, relative permeability, etc, so in this section consider just one phase.  Define the potential $\Phi$ (with SI units Pa) by
+
+\begin{equation}
+\Phi = P + \rho g z
+\end{equation}
+
+Here
+
+- $P$ is the porepressure (SI units Pa);
+- $\rho$ is the fluid density (SI units kg.m$^{-3}$);
+- $g$ is the gravitational acceleration (SI units m.s$^{-2}$ or Pa.m$^{2}$.kg$^{-1}$);
+- $z$ is the coordinate direction pointing "upwards" (i.e. in the opposite direction to gravity) with SI units m.  If gravity acted in a different direction then $z$ would be replaced by another coordinate direction.
+
+In the Darcy setting modelled by PorousFlow, the equivalent of [heat.transfer.skin] is
+
+\begin{equation}
+Q_{\mathrm{s}}^{\mathrm{mass}} = h_{\mathrm{s}}^{\mathrm{mass}}(\Phi_{f} - \Phi_{s}) \ .
+\end{equation}
+
+Here
+
+- $Q_{\mathrm{s}}^{\mathrm{mass}}$ is the mass flux through the skin, with SI units kg.s$^{-1}$.m$^{-2}$.
+- $h_{\mathrm{s}}^{\mathrm{mass}}$ is the mass-transfer coefficient of the skin, with SI units kg.s$^{-1}$.m$^{-2}$.Pa$^{-1}$.
+
+The heat-flow arguments presented above may now be followed using $\Phi$ instead of $T$, and $\rho k k_{\mathrm{rel}} / \mu$ in place of $\lambda$, to yield a suggestion for the mass-transfer coefficient in the 2D-3D situation:
+
+\begin{equation}
+\label{eqn.suggested.hmass}
+h^{\mathrm{mass}} = \frac{h_{\mathrm{s}}^{\mathrm{mass}}\frac{\rho k_{\mathrm{m}}^{nn}k_{\mathrm{rel}}}{\mu} (L_{\mathrm{right}} + L_{\mathrm{left}})}{h_{\mathrm{s}}^{\mathrm{mass}}L_{\mathrm{right}}L_{\mathrm{left}} + \frac{\rho k_{\mathrm{m}}^{nn} k_{\mathrm{rel}}}{\mu}(L_{\mathrm{right}} + L_{\mathrm{left}})} \ ,
+\end{equation}
+
+where $h^{\mathrm{mass}}$ depends on the matrix element surrounding the fracture in the following way
+
+- $\rho$ is the density of the fluid phase (SI units kg.m$^{-3}$).
+- $k_{\mathrm{m}}^{nn}$ is the component of the matrix permeability tensor in the normal direction to the fracture (SI units m$^{2}$).
+- $k_{\mathrm{rel}}$ is the relative permeability of the fluid phase (dimensionless).
+- $\mu$ is the dynamic viscosity of the fluid phase (SI units Pa.s).
+- $L_{\mathrm{right}}$ is the average of the distances between the fracture and the nodes that lie on its right side.
+- $L_{\mathrm{left}}$ is the average of the distances between the fracture and the nodes that lie on its left side (opposite the right side).
+
+This appears in the mass-transfer: $Q^{\mathrm{mass}} = h^{\mathrm{mass}}(\Phi_{f} - \Phi_{m})$, where $\Phi = P + \rho g z$.
+
+There are numerical subtleties in these expressions that may not impact many simulations, but modellers should be aware of the following.
+
+- $\Phi$ seen by the fracture is the matrix nodal values interpolated to the fracture node.  There are clearly many ways of doing this interpolation, eg, $\rho z$ could be interpolated from the fracture nodes, or $\rho z$ could be evaluated at the fracture node given its position, porepressure and temperature.
+- Similar remarks hold for $\rho k_{\mathrm{m}}^{nn}k_{\mathrm{rel}}/\mu$.
+- Stability of the numerics will be improved by evaluating $\rho k_{\mathrm{m}}^{nn}k_{\mathrm{rel}}/\mu$ at the upwind position.  That is, if fluid is flowing from the fracture to the matrix, this term would best be evaluated using $(P, T)$ of the skin, while for the reverse flow the evaluation should be done using the nodal matrix values.  However, it is usually more convenient to fix the evaluation to use the elemental-averaged values of the matrix (using a constant, monomial `AuxVariable` for the matrix).
+
 
 ## Heat advection
 
-TODO
+Heat advection follows the same principal as mass transfer.  The heat transfer by advection through the skin:
+
+\begin{equation}
+Q_{\mathrm{s}} = eh_{\mathrm{s}}^{\mathrm{mass}}(\Phi_{f} - \Phi_{s}) \ .
+\end{equation}
+
+where $e$ is the fluid enthalpy, and the other terms are given above.  In the finite-element setting $Q = eh^{\mathrm{mass}}(\Phi_{f} - \Phi_{m})$, and
+
+\begin{equation}
+\label{eqn.suggested.ehmass}
+eh^{\mathrm{mass}} = \frac{eh_{\mathrm{s}}^{\mathrm{mass}}\frac{e\rho k_{\mathrm{m}}^{nn}k_{\mathrm{rel}}}{\mu} (L_{\mathrm{right}} + L_{\mathrm{left}})}{eh_{\mathrm{s}}^{\mathrm{mass}}L_{\mathrm{right}}L_{\mathrm{left}} + \frac{e\rho k_{\mathrm{m}}^{nn} k_{\mathrm{rel}}}{\mu}(L_{\mathrm{right}} + L_{\mathrm{left}})} \ .
+\end{equation}
+
+As in the mass-transfer case, the numerics will be impacted by where these terms are evaluated.
+
+## Combinations of transfer
+
+In many simulations, heat transfer by both conduction and convection will be active, in addition to mass transfer.  The transfers are simply added together.  For instance
+
+\begin{equation}
+Q^{\mathrm{heat}} = h(T_{f} - T_{m}) + eh^{\mathrm{mass}}(\Phi_{f} - \Phi_{m}) \ .
+\end{equation}
+
+
+
 
 ## A MultiApp primer using the diffusion equation
 
-Before considering porous flow in a mixed-dimensional fracture-matrix system, consider the simpler situation involving two coupled diffusion equations in 1D.  Hence there is no "fracture" and "matrix" in this section: the labels "f" and "m" simply distinguish two different variables.  Assume physical parameters have been chosen appropriately so that
+Before considering porous flow in a mixed-dimensional fracture-matrix system, consider the simpler situation involving two coupled diffusion equations in 1D.  Hence there is *no* "fracture" and "matrix" in this section: the labels "f" and "m" simply distinguish two different variables.  Assume physical parameters have been chosen appropriately so that
 
 \begin{equation}
 \begin{aligned}
