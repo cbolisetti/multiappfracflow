@@ -81,6 +81,11 @@
     order = CONSTANT
     initial_condition = 1
   []
+  [fracture_normal_z]
+    family = MONOMIAL
+    order = CONSTANT
+    initial_condition = 0
+  []
   [element_normal_length]
     family = MONOMIAL
     order = CONSTANT
@@ -91,9 +96,7 @@
   [element_normal_length]
     type = PorousFlowElementLength
     variable = element_normal_length
-    direction = '1 1 0'
-    scale_x = fracture_normal_x
-    scale_y = fracture_normal_y
+    direction = 'fracture_normal_x fracture_normal_y fracture_normal_z'
   []
 []
 
