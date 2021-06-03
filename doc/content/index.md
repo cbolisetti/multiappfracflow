@@ -488,3 +488,11 @@ After 100$\,$s of simulation, the matrix temperature is shown in [single_fractur
 	style=width:60%;margin:auto;padding-top:2.5%;
 	id=single_fracture_heat_transfer_T
 	caption=Temperature along the fracture, with heat transfer to the matrix and without heat transfer to the matrix.  Fluid at 100degC is injected into the fracture at its left end, and fluid is withdrawn at the right end.  With heat transfer, the matrix heats up a little.
+
+
+## Porous flow through a 3D fracture network
+
+!media media/3dFracture_production_T.png
+	style=width:60%;margin:auto;padding-top:2.5%;
+	id=3dFracture_production_T
+	caption=Production temperature from the fracture system when injecting at 1g/s, with and without heat transfer from the matrix
