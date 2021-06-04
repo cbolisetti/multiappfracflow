@@ -1,0 +1,75 @@
+[Tests]
+  [./except01]
+    type = RunException
+    input = except01.i
+    expect_err = 'MosquitoSingleLarvalExplicit: You must not set execute_on to anything but timestep_end for this AuxKernel'
+  [../]
+  [./except02]
+    type = RunException
+    input = except02.i
+    expect_err = 'MosquitoSingleLarvalExplicit: You must not set execute_on to anything but timestep_end for this AuxKernel'
+  [../]
+  [./except03]
+    type = RunException
+    input = except03.i
+    expect_err = 'MosquitoSingleLarvalExplicit: Length of male_biases vector must be 9'
+  [../]
+
+  [./single_larval_explicit_01]
+    type = CSVDiff
+    input = single_larval_explicit_01.i
+    csvdiff = single_larval_explicit_01_out.csv
+  [../]
+  [./single_larval_explicit_02]
+    type = CSVDiff
+    input = single_larval_explicit_02.i
+    csvdiff = single_larval_explicit_02_out.csv
+  [../]
+
+  [./element_length_except1]
+    type = RunException
+    input = element_length_except1.i
+    expect_err = 'The variable must be an elemental variable'
+  [../]
+  [./element_length_except2]
+    type = RunException
+    input = element_length_except2.i
+    expect_err = 'Three values or variables must be provided'
+  [../]
+  [./element_length_2D]
+    type = CSVDiff
+    input = element_length_2D.i
+    csvdiff = element_length_2D_out.csv
+  [../]
+  [./element_length_3D]
+    type = CSVDiff
+    input = element_length_3D.i
+    csvdiff = element_length_3D_out.csv
+  [../]
+
+  [./element_normal_except1]
+    type = RunException
+    input = element_normal_except1.i
+    expect_err = 'The variable must be an elemental variable'
+  [../]
+  [./element_normal_except2]
+    type = RunException
+    input = element_normal_except2.i
+    expect_err = 'Must not be the zero vector'
+  [../]
+  [./element_normal_except3]
+    type = RunException
+    input = element_normal_except3.i
+    expect_err = 'Must not be the zero vector'
+  [../]
+  [./element_normal_1D_2D]
+    type = CSVDiff
+    input = element_normal_1D_2D.i
+    csvdiff = element_normal_1D_2D_out.csv
+  [../]
+  [./element_normal_2D_3D]
+    type = CSVDiff
+    input = element_normal_2D_3D.i
+    csvdiff = element_normal_2D_3D_out.csv
+  [../]
+[]
