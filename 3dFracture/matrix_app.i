@@ -71,7 +71,7 @@
   []
   [aq_thermal_conductivity]
     type = PorousFlowThermalConductivityIdeal
-    dry_thermal_conductivity = '5 0 0  0 5 0  0 0 5' # thermal conductivity of water times fracture aperture
+    dry_thermal_conductivity = '5 0 0  0 5 0  0 0 5'
   []
 []
 
@@ -135,11 +135,11 @@
   solve_type = NEWTON
   [TimeStepper]
     type = IterationAdaptiveDT
-    dt = 1E4
+    dt = 1E3
     optimal_iterations = 4
-    timestep_limiting_postprocessor = 1E8
+    timestep_limiting_postprocessor = 1E7
   []
-  end_time = 1E9
+  end_time = 1E8
   nl_abs_tol = 1E-4
 []
 

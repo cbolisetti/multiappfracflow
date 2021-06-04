@@ -64,7 +64,7 @@ To motivate a numerical value for $h$, assume that the fracture width is tiny co
 \label{heat.transfer.skin}
 Q_{s} = h_{\mathrm{s}}(T_{f} - T_{s}) \ ,
 \end{equation}
-where $T_{f}$ is the fracture temperature, $h_{\mathrm{s}}$ is the heat-transfer coefficient of the skin, with SI units J.m$^{-2}$.s$^{-1}$.K$^{-1}$, and $Q_{s}$ is the heat flux, with SI units J.s$^{-1}$.m$^{-2}$.
+where $T_{f}$ is the fracture temperature, $h_{\mathrm{s}}$ is the heat-transfer coefficient of the skin, with SI units J.m$^{-2}$.s$^{-1}$.K$^{-1}$, and $Q_{s}$ is the heat flux, with SI units J.s$^{-1}$.m$^{-2}$.  A method for estimating $h_{s}$ is provided below.
 
 Just as the fracture may be considered two-dimensional (implemented by including its aperture in the fracture `Kernels` and using 2D finite elements), the size of the skin is also ignored.  Thereby, the matrix "sees" the fracture as an object of $T_{s}$ (*not* $T_{f}$) sitting within it.  Consider [skin_two_nodes], where an object of temperature $T_{s}$ sits between two finite element nodes, of temperature $T_{0}$ and $T_{1}$.
 
@@ -103,6 +103,26 @@ where $h$ depends on the matrix element surrounding the fracture:
 - $\lambda_{\mathrm{m}}^{nn}$ is the component of the matrix thermal conductivity in the normal direction to the fracture;
 - $L_{\mathrm{right}}$ is the average of the distances between the fracture and the nodes that lie on its right side;
 - $L_{\mathrm{left}}$ is the average of the distances between the fracture and the nodes that lie on its left side (opposite the right side).
+
+The result [eqn.suggested.h] depends on $L_{\mathrm{left}}$ and $L_{\mathrm{right}}$.  In most settings, it is appropriate to assume that $L_{\mathrm{left}} = L_{\mathrm{right}} = L$ since this corresponds to making a shift of the fracture position by an amount less than the finite-element size.  Since the accuracy of the finite-element scheme is governed by the element size, such small shifts introduce errors that are smaller than the finite-element error.  This means [eqn.suggested_h] reads
+
+\begin{equation}
+\label{eqn.suggested.h.L}
+h = \frac{2h_{\mathrm{s}}\lambda_{\mathrm{m}}^{nn}L}{h_{\mathrm{s}}L^{2} + 2\lambda_{\mathrm{m}}^{nn}L} \ .
+\end{equation}
+
+The heat-transfer through the skin is likely to exceed heat conduction through the skin, since the heat transfer involves faster processes such as convection.  Therefore, $h_{\mathrm{s}} = c\lambda_{\mathrm{m}}/ s$, where $s$ is the skin size and $c>1$.  This yields
+
+\begin{equation}
+\label{eqn.simple.L}
+h = \frac{2\lambda_{\mathrm{m}}^{nn}}{L + 2s/c} \rightarrow \frac{2\lambda_{\mathrm{m}}^{nn}}{L} \ ,
+\end{equation}
+
+where the final limit is for $s \ll L$, which is likely to be reasonably correct in most simulations.
+
+
+
+
 
 Finally, notice that if $a A \gg V$, where $A$ is now the fracture area modelled by one finite-element fracture node, and $V$ is the volume modelled by one finite-element matrix node, then the single fracture node can apply a lot of heat to the "small" matrix node, which will likely cause numerical instability if $\Delta t$ is too large, in the multiApp approach.
 
@@ -150,6 +170,13 @@ where $h^{\mathrm{mass}}$ depends on the matrix element surrounding the fracture
 
 This appears in the mass-transfer: $Q^{\mathrm{mass}} = h^{\mathrm{mass}}(\Phi_{f} - \Phi_{m})$, where $\Phi = P + \rho g z$.
 
+The arguments that led to [eqn.suggested.h.L] and [eqn.simple.L] lead in this case to
+
+\begin{equation}
+\label{eqn.simple.hmass}
+h^{\mathrm{mass}} = \frac{2\rho k_{\mathrm{m}}^{nn}k_{\mathrm{rel}}}{\mu L} \ .
+\end{equation}
+
 There are numerical subtleties in these expressions that may not impact many simulations, but modellers should be aware of the following.
 
 - $\Phi$ seen by the fracture is the matrix nodal values interpolated to the fracture node.  There are clearly many ways of doing this interpolation, eg, $\rho z$ could be interpolated from the fracture nodes, or $\rho z$ could be evaluated at the fracture node given its position, porepressure and temperature.
@@ -171,6 +198,14 @@ where $e$ is the fluid enthalpy, and the other terms are given above.  In the fi
 \label{eqn.suggested.ehmass}
 eh^{\mathrm{mass}} = \frac{eh_{\mathrm{s}}^{\mathrm{mass}}\frac{e\rho k_{\mathrm{m}}^{nn}k_{\mathrm{rel}}}{\mu} (L_{\mathrm{right}} + L_{\mathrm{left}})}{eh_{\mathrm{s}}^{\mathrm{mass}}L_{\mathrm{right}}L_{\mathrm{left}} + \frac{e\rho k_{\mathrm{m}}^{nn} k_{\mathrm{rel}}}{\mu}(L_{\mathrm{right}} + L_{\mathrm{left}})} \ .
 \end{equation}
+
+The arguments that led to [eqn.suggested.h.L] and [eqn.simple.L] lead in this case to
+
+\begin{equation}
+\label{eqn.simple.ehmass}
+eh^{\mathrm{mass}} = \frac{2e\rho k_{\mathrm{m}}^{nn}k_{\mathrm{rel}}}{\mu L} \ .
+\end{equation}
+
 
 As in the mass-transfer case, the numerics will be impacted by where these terms are evaluated.
 
@@ -492,7 +527,118 @@ After 100$\,$s of simulation, the matrix temperature is shown in [single_fractur
 
 ## Porous flow through a 3D fracture network
 
+A sample PorousFlow simulation through the small 3D fracture network shown in [orbit_fracture] is presented in this section.  The above methodology used above is extended to the 3D case including fractures of various alignments.  It is assumed that
+
+- the physics is fully-saturated, non-isothermal porous flow with heat conduction and convection;
+- the porepressure is initially around 10$\,$MPa (hydrostatic) corresponding to a depth of around 1$\,$km;
+- the temperature is 200$^{\circ}$C;
+- injection is into the fracture network only, through one point, at a rate of $10^{-2}\,$kg.s$^{-1}$ and temperature of 100$^{\circ}$C;
+- production is from the fracture network only, through one point, at a rate of approximately $10^{-2}\,$kg.s$^{-1}$ (it cannot be exactly $10^{-2}\,$kg.s$^{-1}$ initially because this causes large porepressure reductions due to thermal contraction of water);
+- only heat energy is transferred between the fracture and the matrix: the matrix heats the cool water injected into the fracture network.
+
+
+!media media/orbit_fracture.mp4
+	style=width:60%;margin:auto;padding-top:2.5%;
+	id=orbit_fracture
+	caption=Fracture network.  The injection point is coloured green.  The production point is red.
+
+Before presenting the input files in detail, the simulation's coupling involves the following steps.
+
+1. Each fracture element must be prescribed with a normal direction, using a [PorousFlowElementNormal](PorousFlowElementNormal.md) AuxKernel.
+2. The fracture-normal information must be sent from each fracture element to the nearest matrix element, which is implemented using a [MultiAppNearestNodeTransfer](MultiAppNearestNodeTransfer.md) Transfer.
+3. Each matrix element must be prescribed with a normal length, $L$, using a [PorousFlowElementLength](PorousFlowElementLength.md) AuxKernel and the fracture-normal direction sent to it.
+4. Each matrix element must be prescribed with a normal thermal conductivity, $\lambda_{\mathrm{m}}^{nn}$, using the fracture-normal direction sent to it.
+5. Each fracture element must retrieve $L$ and $\lambda_{\mathrm{m}}^{nn}$ from its nearest matrix element.
+6. Each fracture element must calculate $h$ using [eqn.suggested.h.L] or [eqn.simple.L].
+
+These steps could be performed during the simulation initialization, however, it is more convenient to perform them at each time-step.  When these steps have been accomplished, each time-step involves the following (which is also used in the sections above).
+
+1. The matrix temperature, `matrix_T`, is sent to the fracture nodes using a [MultiAppInterpolationTransfer](MultiAppInterpolationTransfer.md) Transfer.
+2. The fracture physics is solved.
+3. The heat flowing between the fracture and matrix is transferred using a [MultiAppReporterTransfer](MultiAppReporterTransfer.md) Transfer.
+4. The matrix physics is solved.
+
+
+### The fracture input file
+
+The [PorousFlowFullySaturated](PorousFlowFullySaturated.md) physics is used to model this situation.  [Kuzmin-Turek](kt.md) stabilization is used, and porepressure is measured in MPa.
+
+!listing 3dFracture/fracture_app.i block=PorousFlowFullySaturated
+
+The coupling with the matrix is by the [PorousFlowHeatMassTransfer](PorousflowHeatMassTransfer.md) Kernel
+
+!listing 3dFracture/fracture_app.i block=Kernels
+
+The model assumes all fractures have aperture $a = 0.1\,$mm, although prescribing a block-dependent $a$ is obviously easy in MOOSE (it just makes the input file a lot longer).  All fractures are assumed to have porosity 1.0 and permeability $10^{-11}\,$m$^{2}$.  Because there is no "matrix" (rock material) inside the fractures, the matrix specific heat capacity is zero (in the matrix input file the matrix specific heat capacity is non zero) and the thermal conductivity is due to water, $0.6\,$W.m$^{-1}$.K$^{-1}$.  Remembering that all fracture properties much be multiplied by $a$, as in [eqn.2D.heat.eqn], the `Materials` block reads:
+
+!listing 3dFracture/fracture_app.i block=Materials
+
+This simulation involves considerable changes of water pressure and temperature, so a high-precision equation of state is used:
+
+!listing 3dFracture/fracture_app.i block=Modules
+
+PorousFlow contains many different [sources and sinks](sinks.md) that could be used to implement the injection and production.  In this case, temperature is fixed at the injection node using a [DirichletBC](DirichletBC.md) and a constant rate of fluid is injected using a [PorousFlowPointSourceFromPostprocessor](PorousFlowPointSourceFromPostprocessor.md) Dirac Kernel.  Two [PorousFlowPolyLineSink](PorousFlowPolyLineSink.md) Dirac Kernels extract mass and heat (the latter with `use_enthalpy = true`) from the production node.  These are designed to keep the porepressure around 10$\,$MPa, ramping up the production rate if the porepressure exceeds this, or reducing it if the porepressure is less than 10$\,$MPa.  The relevant blocks are:
+
+!listing 3dFracture/fracture_app.i block=BCs
+
+!listing 3dFracture/fracture_app.i block=DiracKernels
+
+The above is run-of-the-mill PorousFlow material.  The coupling with the matrix is the most important to the current page.  The steps in the coupling were outlined above.  The `AuxKernels` needed are:
+
+!listing 3dFracture/fracture_app.i block=AuxKernels
+
+Notice the expression in the `heat_transfer_coefficient` function.  In the case at hand, if [eqn.simple.L] is used then the matrix very rapidly heats up the water in the fracture, leading to rather boring (though realistic) results.  Hence, various values for $h_{s}$ have been provided.
+
+### The matrix input file
+
+Most of the matrix input file is standard by now.  The physics is governed by [PorousFlowFullySaturated](PorousFlowFullySaturated.md) along with the familiar [VectorPostprocessorPointSource](VectorPostprocessorPointSource.md):
+
+!listing 3dFracture/matrix_app.i block=PorousFlowFullySaturated
+
+!listing 3dFracture/matrix_app.i block=DiracKernels
+
+It is assumed the rock matrix has small porosity of 0.1 and permeability of $10^{-18}\,$m$^{2}$.  The rock density is 2700$\,$kg.m$^{-3}$ with specific heat capacity of 800$\,$J.kg$^{-1}$.K$^{-1}$ and isotropic thermal conductivity of 5$\,$W.m$^{-1}$.K$^{-1}$.  Hence, the `Materials` block is:
+
+!listing 3dFracture/matrix_app.i block=Materials
+
+The matrix needs to compute $\lambda_{\mathrm{m}}^{nn}$ and $L$ to send these to the fracture.  This is accomplished using the following:
+
+!listing 3dFracture/matrix_app.i block=AuxKernels
+
+The `Transfers` described above are:
+
+!listing 3dFracture/matrix_app.i block=Transfers
+
+
+### Results
+
+When using a realistic heat-transfer coefficient, such as [eqn.simple.L] the matrix rapidly heats the injected cool water in the fracture, however smaller $h$ leads to less heating, as shown in [3dFracture_production_T]
+
 !media media/3dFracture_production_T.png
 	style=width:60%;margin:auto;padding-top:2.5%;
 	id=3dFracture_production_T
-	caption=Production temperature from the fracture system when injecting at 1g/s, with and without heat transfer from the matrix
+	caption=Production temperature from the fracture system when injecting at 0.01g/s, with and without heat transfer from the matrix
+
+The system rapidly reaches equilibrium, where the porepressure is around 20$\,$MPa at the injection well, as shown in [orbit_p].
+
+!media media/orbit_p.mp4
+	style=width:60%;margin:auto;padding-top:2.5%;
+	id=orbit_p
+	caption=Porepressure in the fracture rapidly reaches steady-state with approximately 20MPa at the injection well
+
+For realistic heat-transfer coefficients such as [eqn.simple.L], the injected water is heated from 100$^{\circ}$C to 200$^{\circ}$C within a few metres of the injection well.  This does not produce interesting animations, however, so to get a feel for the system's evolution [orbit_t] shows the results when using an unrealistically small $h$, with $h_{s} = 10^{-3}$ in [eqn.suggested.h.L].  Notice that:
+
+- the injectate does not invade parts of the fracture system
+- the higher regions of the fracture system remain hot, due to the buoyancy of the hot water
+
+!media media/orbit_t.mp4
+	style=width:60%;margin:auto;padding-top:2.5%;
+	id=orbit_t
+	caption=Temperature in the fracture when using an unrealistically small heat-transfer coefficient to illustrate the evolution of the system
+
+The temperature in the matrix does not degrade appreciably for a very long time, due to the matrix having such a huge thermal mass compared with the small amount of water passing through the fracture.  [orbit_t_matrix] shows the evolution of the cooled matrix region when using the unrealistically small heat-transfer coefficient.  When using a realistic value such as [eqn.simple.L], and running the simulation for a few years, the cooled region is within only a few metres of the injection well.
+
+!media media/orbit_t_matrix.mp4
+	style=width:60%;margin:auto;padding-top:2.5%;
+	id=orbit_t_matrix
+	caption=Evolution of the regions of the matrix that suffer more than 0.05degC temperature reduction.  Note these results are using an unrealistically small heat-transfer coefficient.

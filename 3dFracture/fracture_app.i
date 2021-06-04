@@ -1,4 +1,4 @@
-injection_rate = 1E-3 # kg/s
+injection_rate = 1E-2 # kg/s
 
 twice_injection_rate = ${fparse 2*injection_rate}
 
@@ -112,7 +112,7 @@ twice_injection_rate = ${fparse 2*injection_rate}
     variable = heat_transfer_coefficient
     args = 'enclosing_element_normal_length enclosing_element_normal_thermal_cond'
     constant_names = h_s
-    constant_expressions = 1E-3
+  constant_expressions = 1E-1 # if 1E-3 then fracture water heats to about 430K (160degC), if 1E-1 then fracture water heats to 473 (200degC)
     function = 'if(enclosing_element_normal_length = 0, 0, h_s * enclosing_element_normal_thermal_cond * 2 * enclosing_element_normal_length / (h_s * enclosing_element_normal_length * enclosing_element_normal_length + enclosing_element_normal_thermal_cond * 2 * enclosing_element_normal_length))' 
   []
 []
@@ -186,7 +186,7 @@ twice_injection_rate = ${fparse 2*injection_rate}
   []
   [permeability]
     type = PorousFlowPermeabilityConst
-    permeability = '1E-16 0 0   0 1E-16 0   0 0 1E-16' # fracture perm = 1E-12 m^2, but this includes fracture aperture of 1E-4
+    permeability = '1E-15 0 0   0 1E-15 0   0 0 1E-15' # fracture perm = 1E-11 m^2, but this includes fracture aperture of 1E-4
   []
   [internal_energy]
     type = PorousFlowMatrixInternalEnergy
@@ -241,13 +241,13 @@ twice_injection_rate = ${fparse 2*injection_rate}
   solve_type = NEWTON
   [TimeStepper]
     type = IterationAdaptiveDT
-    dt = 1E4
+    dt = 1E3
     optimal_iterations = 4
     growth_factor = 1.1
-    timestep_limiting_postprocessor = 1E8
+    timestep_limiting_postprocessor = 1E7
   []
 ###  dt = 1E7
-  end_time = 1E9
+  end_time = 1E8
   nl_abs_tol = 1E-6
   nl_max_its = 10
 []

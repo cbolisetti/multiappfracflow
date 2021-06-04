@@ -1,4 +1,4 @@
-injection_rate = 1E-3 # kg/s
+injection_rate = 1E-2 # kg/s
 
 twice_injection_rate = ${fparse 2*injection_rate}
 
@@ -186,7 +186,7 @@ twice_injection_rate = ${fparse 2*injection_rate}
   []
   [permeability]
     type = PorousFlowPermeabilityConst
-    permeability = '1E-16 0 0   0 1E-16 0   0 0 1E-16' # fracture perm = 1E-12 m^2, but this includes fracture aperture of 1E-4
+    permeability = '1E-15 0 0   0 1E-15 0   0 0 1E-15' # fracture perm = 1E-11 m^2, but this includes fracture aperture of 1E-4
   []
   [internal_energy]
     type = PorousFlowMatrixInternalEnergy
@@ -241,12 +241,12 @@ twice_injection_rate = ${fparse 2*injection_rate}
   solve_type = NEWTON
   [TimeStepper]
     type = IterationAdaptiveDT
-    dt = 1E4
+    dt = 1E3
     optimal_iterations = 7
     growth_factor = 1.1
     timestep_limiting_postprocessor = 1E8
   []
-  end_time = 3E7
+  end_time = 3E6
   nl_abs_tol = 1E-6
   nl_max_its = 10
 []
