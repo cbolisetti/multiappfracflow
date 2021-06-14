@@ -21,11 +21,18 @@ injection_rate = 10 # kg/s
 
 [Variables]
   [frac_P]
-    initial_condition = 10 # MPa
     scaling = 1E6
   []
   [frac_T]
     initial_condition = 473
+  []
+[]
+
+[ICs]
+  [frac_P]
+    type = FunctionIC
+    variable = frac_P
+    function = insitu_pp
   []
 []
 
@@ -86,6 +93,8 @@ injection_rate = 10 # kg/s
     family = MONOMIAL
     order = CONSTANT
   []
+  [insitu_pp]
+  []
 []
 
 [AuxKernels]
@@ -124,6 +133,12 @@ injection_rate = 10 # kg/s
     row = 0
     column = 0
   []
+  [insitu_pp]
+    type = FunctionAux
+    execute_on = initial
+    variable = insitu_pp
+    function = insitu_pp
+  []
 []
 
 [BCs]
@@ -145,26 +160,26 @@ injection_rate = 10 # kg/s
   [withdraw_fluid]
     type = PorousFlowPeacemanBorehole
     SumQuantityUO = kg_out_uo
-    bottom_p_or_t = 10
+    bottom_p_or_t = 9.7 # approx insitu at production point
     character = 1
     line_length = 1
     point_file = production.xyz
     unit_weight = '0 0 0'
     fluid_phase = 0
-    multiplying_var = 1E7
+    multiplying_var = 1E9
     variable = frac_P
   []
   [withdraw_heat]
     type = PorousFlowPeacemanBorehole
     SumQuantityUO = J_out_uo
-    bottom_p_or_t = 10
+    bottom_p_or_t = 9.7 # approx insitu at production point
     character = 1
     line_length = 1
     point_file = production.xyz
     unit_weight = '0 0 0'
     fluid_phase = 0
     use_enthalpy = true
-    multiplying_var = 1E7
+    multiplying_var = 1E9
     variable = frac_T
   []
 []
@@ -196,14 +211,11 @@ injection_rate = 10 # kg/s
 
 [Materials]
   [porosity]
-    type = PorousFlowPorosity
-    porosity_zero = 1E-4 # fracture porosity = 1.0, but must include fracture aperture of 1E-4 at P = 10
-    biot_coefficient = 1E-16
-    biot_coefficient_prime = 2
-    ensure_positive = false # will never get negative in this case
-    fluid = true
-    reference_porepressure = 10
-    solid_bulk = 0.833 # 833kPa
+    type = PorousFlowPorosityLinear
+    porosity_ref = 1E-4 # fracture porosity = 1.0, but must include fracture aperture of 1E-4 at P = insitu_pp
+    P_ref = insitu_pp
+    P_coeff = 1E-3 # this is in metres/MPa, ie for P_ref = 1/P_coeff, the aperture becomes 1 metre
+    porosity_min = 1E-5
   []
   [permeability]
     type = PorousFlowPermeabilityKozenyCarman
@@ -230,6 +242,10 @@ injection_rate = 10 # kg/s
     vals = 'dt kg_out'
     vars = 'dt kg_out'
     value = 'kg_out/dt'
+  []
+  [insitu_pp]
+    type = ParsedFunction
+    value = '10 - 0.847E-2 * z' # Approximate hydrostatic in MPa
   []
 []
   
@@ -259,6 +275,11 @@ injection_rate = 10 # kg/s
     type = PointValue
     variable = frac_P
     point = '101.705 160.459 39.5722'
+  []
+  [P_in]
+    type = PointValue
+    variable = frac_P
+    point = '58.8124 0.50384 74.7838'
   []
 []
 
