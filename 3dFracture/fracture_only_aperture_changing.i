@@ -1,6 +1,7 @@
 injection_rate = 10 # kg/s
 
 [Mesh]
+  uniform_refine = 0
   [cluster34]
     type = FileMeshGenerator
     file = 'Cluster_34.exo'
@@ -9,7 +10,7 @@ injection_rate = 10 # kg/s
     type = BoundingBoxNodeSetGenerator
     input = cluster34
     bottom_left = '-1000 0 -1000'
-    top_right = '1000 1 1000'
+    top_right = '1000 0.504 1000'
     new_boundary = injection_node
   []
 []
@@ -166,7 +167,7 @@ injection_rate = 10 # kg/s
     point_file = production.xyz
     unit_weight = '0 0 0'
     fluid_phase = 0
-    multiplying_var = 1E9
+    multiplying_var = 1E10
     variable = frac_P
   []
   [withdraw_heat]
@@ -179,7 +180,7 @@ injection_rate = 10 # kg/s
     unit_weight = '0 0 0'
     fluid_phase = 0
     use_enthalpy = true
-    multiplying_var = 1E9
+    multiplying_var = 1E10
     variable = frac_T
   []
 []

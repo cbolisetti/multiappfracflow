@@ -1,4 +1,14 @@
-# Transfers used in MultiApp fracture simulations
+# Fracture flow using a MultiApp approach: Transfers
+
+PorousFlow can be used to simulate flow through fractured porous media.  The fundamental premise is *the fractures can be considered as lower dimensional entities within the higher-dimensional porous media*.  This page is part of a set that describes a MOOSE MultiApp approach to simulating such models:
+
+- [Introduction](multiapp_fracture_flow_introduction.md)
+- [Mathematics and physical interpretation](multiapp_fracture_flow_equations.md)
+- [Transfers](multiapp_fracture_flow_transfers.md)
+- [MultiApp primer](multiapp_fracture_flow_primer.md): the diffusion equation with no fractures, and quantifying the errors introduced by the MultiApp approach
+- [Diffusion in mixed dimensions](multiapp_fracture_flow_diffusion.md)
+- [Porous flow in a single matrix system](multiapp_fracture_flow_PorousFlow_2D.md)
+- [Porous flow in a small fracture network](multiapp_fracture_flow_PorousFlow_3D.md)
 
 A number of different transfers are used in the MultiApp fracture flow simulations.  This page explains the functionality of each type.
 
@@ -14,11 +24,11 @@ A [MultiAppMeshFunctionTransfer](MultiAppMeshFunctionTransfer.md) is used to tra
 !media media/meshfunction_matrix_to_fracture.png
 	style=width:60%;margin:auto;padding-top:2.5%;
 	id=meshfunction_matrix_to_fracture
-	caption=Temperature (indicated by colors) is transferred from the matrix (6 square elements) to the fracture (zig-zag line) using a MultiAppMeshFunctionTransfer.  Fracture nodes lying outside the matrix domain do not get prescribed a value by the Transfer.
+	caption=Temperature (indicated by colors) is transferred from the matrix (6 square elements) to the fracture (zig-zag line) using a MultiAppMeshFunctionTransfer.  Fracture nodes lying outside the matrix domain do not get prescribed a value by the Transfer, so remain at their initial values (zero in this case).
 
 ## MultiAppInterpolationTransfer
 
-A [MultiAppInterpolationTransfer](MultiAppInterpolationTransfer.md) may be used to transfer the matrix temperature to the fracture mesh, as shown in [interpolation_matrix_to_fracture].  Each node on the fracture mesh looks for the nearest `num_points` (3 by default) nodes on the matrix mesh, and receives a temperature value interpolated from those three temperatures.  An alternate is to use a [MultiAppMeshFunctionTransfer](MultiAppMeshFunctionTransfer.md) which uses the matrix shape-function information instead, but that requires the fracture domain to be included within the matrix domain, since no extrapolation is performed.
+A [MultiAppInterpolationTransfer](MultiAppInterpolationTransfer.md) may be used to transfer the matrix temperature to the fracture mesh, as shown in [interpolation_matrix_to_fracture].  Each node on the fracture mesh looks for the nearest `num_points` (3 by default) nodes on the matrix mesh, and receives a temperature value interpolated from those three temperatures.  As mentioned above, an alternate is to use a [MultiAppMeshFunctionTransfer](MultiAppMeshFunctionTransfer.md) which uses the matrix shape-function information instead, but that requires the fracture domain to be included within the matrix domain, since no extrapolation is performed.
 
 !media media/interpolation_matrix_to_fracture.png
 	style=width:60%;margin:auto;padding-top:2.5%;
