@@ -1,0 +1,91 @@
+#intersecting circles: 2procs - FAIL
+reset
+create vertex 143.145 86.0844 126.982
+create vertex 124.606 99.8526 115.198
+create vertex 121.315 124.882 121.1
+create surface circle vertex 3  2  1  
+create vertex 118.261 79.3041 116.219
+create vertex 134.445 124.18 105.1
+create vertex 149.362 154.351 140.688
+create surface circle vertex 5  6  4  
+imprint all
+merge all
+surface all size 10
+surface all scheme trimesh
+mesh surface all
+block 1 surface all
+export mesh "intersectingCircle.exo" overwrite
+
+#planes meet at a line: 2procs - PASS
+reset
+create vertex 118.261 79.3041 116.219
+create vertex 134.445 124.18 105.1
+create vertex 149.362 154.351 140.688
+create surface vertex 1 2 3
+create vertex 143.145 86.0844 126.982
+create surface vertex 1 3 4
+imprint all
+merge all
+surface all size 10
+surface all scheme trimesh
+mesh surface all
+block 1 surface all
+export mesh "cornerFacets.exo" overwrite
+
+#planes from above intersect: 2procs - FAIL; 4procs - pass
+reset
+create vertex 118.261 79.3041 116.219
+create vertex 134.445 124.18 105.1
+create vertex 149.362 154.351 140.688
+create vertex 148.095 139.648 187.395
+create surface vertex 1 2 3
+create surface vertex 1 3 4
+create vertex 143.145 86.0844 126.982
+create surface vertex 1 3 7
+imprint all
+merge all
+surface all size 10
+surface all scheme trimesh
+mesh surface all
+block 1 surface all
+export mesh "tIntersectionFacets.exo" overwrite
+
+#intersecting planes with 1 rotation: 2procs - Pass   3procs - Fail
+reset
+create surface rectangle width 200 zplane 
+create surface rectangle width 200 zplane 
+rotate Surface 2 angle 30  about X include_merged 
+imprint all
+merge all
+surface all size 100
+#surface all scheme trimesh
+mesh surface all
+block 1 surface all
+export mesh "intersectionRectangle.exo" overwrite
+
+#corner planes with 1 rotation Always Pass
+reset
+create surface rectangle width 200 zplane 
+create surface rectangle width 200 zplane 
+rotate Surface 2 angle 90  about vertex 1 2 include_merged 
+imprint all
+merge all
+surface all size 40
+surface all scheme trimesh
+mesh surface all
+block 1 surface all
+export mesh "cornerRectangle.exo" overwrite
+
+#intersecting planes with 2 rotations pass
+reset
+create surface rectangle width 200 zplane 
+create surface rectangle width 200 zplane 
+rotate Surface 2 angle 30  about X include_merged 
+rotate Surface 2 angle 30  about y include_merged 
+imprint all
+merge all
+surface all size 100
+surface all scheme trimesh
+mesh surface all
+block 1 surface all
+export mesh "doubleRotateIntersectionRectangle.exo" overwrite
