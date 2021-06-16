@@ -119,7 +119,7 @@ injection_rate = 10 # kg/s
     variable = heat_transfer_coefficient
     args = 'enclosing_element_normal_length enclosing_element_normal_thermal_cond'
     constant_names = h_s
-    constant_expressions = 1E-3
+    constant_expressions = 1E3 # should be much bigger than thermal_conductivity / L ~ 1
     function = 'if(enclosing_element_normal_length = 0, 0, h_s * enclosing_element_normal_thermal_cond * 2 * enclosing_element_normal_length / (h_s * enclosing_element_normal_length * enclosing_element_normal_length + enclosing_element_normal_thermal_cond * 2 * enclosing_element_normal_length))' 
   []
   [aperture]
@@ -161,7 +161,7 @@ injection_rate = 10 # kg/s
   [withdraw_fluid]
     type = PorousFlowPeacemanBorehole
     SumQuantityUO = kg_out_uo
-    bottom_p_or_t = 9.7 # approx insitu at production point
+    bottom_p_or_t = 9.7 # approx insitu at production point, to prevent aperture closing due to low porepressures
     character = 1
     line_length = 1
     point_file = production.xyz
@@ -173,7 +173,7 @@ injection_rate = 10 # kg/s
   [withdraw_heat]
     type = PorousFlowPeacemanBorehole
     SumQuantityUO = J_out_uo
-    bottom_p_or_t = 9.7 # approx insitu at production point
+    bottom_p_or_t = 9.7 # approx insitu at production point, to prevent aperture closing due to low porepressures
     character = 1
     line_length = 1
     point_file = production.xyz
@@ -233,7 +233,7 @@ injection_rate = 10 # kg/s
   []
   [aq_thermal_conductivity]
     type = PorousFlowThermalConductivityIdeal
-    dry_thermal_conductivity = '0.6E-4 0 0  0 0.6E-4 0  0 0 0.6E-4' # thermal conductivity of water times fracture aperture
+    dry_thermal_conductivity = '0.6E-4 0 0  0 0.6E-4 0  0 0 0.6E-4' # thermal conductivity of water times fracture aperture.  This should increase linearly with aperture, but is set constant in this model
   []
 []
 

@@ -2,13 +2,13 @@
   [generate]
     type = GeneratedMeshGenerator
     dim = 3
-    nx = 44
+    nx = 11
     xmin = -10
     xmax = 210
-    ny = 34
+    ny = 9
     ymin = -10
     ymax = 160
-    nz = 44
+    nz = 11
     zmin = -10
     zmax = 210
   []
@@ -20,7 +20,6 @@
 
 [Variables]
   [matrix_P]
-    initial_condition = 10 # MPa
     scaling = 1E6
   []
   [matrix_T]
@@ -28,6 +27,21 @@
   []
 []
 
+[ICs]
+  [frac_P]
+    type = FunctionIC
+    variable = matrix_P
+    function = insitu_pp
+  []
+[]
+
+[Functions]
+  [insitu_pp]
+    type = ParsedFunction
+    value = '10 - 0.847E-2 * z' # Approximate hydrostatic in MPa
+  []
+[]
+  
 [PorousFlowFullySaturated]
   coupling_type = ThermoHydro
   porepressure = matrix_P
@@ -127,6 +141,8 @@
   [entire_jacobian]
     type = SMP
     full = true
+    petsc_options_iname = '-pc_type'
+    petsc_options_value = 'lu'
   []
 []
 
@@ -135,12 +151,13 @@
   solve_type = NEWTON
   [TimeStepper]
     type = IterationAdaptiveDT
-    dt = 1E3
+    dt = 1
+    growth_factor = 1.1
     optimal_iterations = 4
-    timestep_limiting_postprocessor = 1E7
+    timestep_limiting_postprocessor = 1E8
   []
-  end_time = 1E8
-  nl_abs_tol = 1E-4
+  end_time = 3E6
+  nl_abs_tol = 1E-2
 []
 
 [Outputs]
@@ -151,7 +168,8 @@
 [MultiApps]
   [fracture_app]
     type = TransientMultiApp
-    input_files = fracture_app.i
+    input_files = fracture_only_aperture_changing.i
+    cli_args = 'Outputs/ex/sync_only=false'
     execute_on = TIMESTEP_BEGIN
     sub_cycling = true
 ### catch_up = true
