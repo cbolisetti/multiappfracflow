@@ -1,7 +1,7 @@
 injection_rate = 10 # kg/s
 
 [Mesh]
-  uniform_refine = 0
+  uniform_refine = 3
   [cluster34]
     type = FileMeshGenerator
     file = 'Cluster_34.exo'
