@@ -1,7 +1,7 @@
 injection_rate = 10 # kg/s
 
 [Mesh]
-  uniform_refine = 1
+  uniform_refine = 0
   [cluster34]
     type = FileMeshGenerator
     file = 'Cluster_34.exo'
@@ -94,6 +94,14 @@ injection_rate = 10 # kg/s
     family = MONOMIAL
     order = CONSTANT
   []
+  [density]
+    family = MONOMIAL
+    order = CONSTANT
+  []
+  [viscosity]
+    family = MONOMIAL
+    order = CONSTANT
+  []
   [insitu_pp]
   []
 []
@@ -134,6 +142,18 @@ injection_rate = 10 # kg/s
     row = 0
     column = 0
   []
+  [density]
+    type = PorousFlowPropertyAux
+    variable = density
+    property = density
+    phase = 0
+  []
+  [viscosity]
+    type = PorousFlowPropertyAux
+    variable = viscosity
+    property = viscosity
+    phase = 0
+  []
   [insitu_pp]
     type = FunctionAux
     execute_on = initial
@@ -161,26 +181,26 @@ injection_rate = 10 # kg/s
   [withdraw_fluid]
     type = PorousFlowPeacemanBorehole
     SumQuantityUO = kg_out_uo
-    bottom_p_or_t = 9.7 # approx insitu at production point, to prevent aperture closing due to low porepressures
+    bottom_p_or_t = 10.6 # 1MPa + approx insitu at production point, to prevent aperture closing due to low porepressures
     character = 1
     line_length = 1
     point_file = production.xyz
     unit_weight = '0 0 0'
     fluid_phase = 0
-    multiplying_var = 1E10
+    use_mobility = true
     variable = frac_P
   []
   [withdraw_heat]
     type = PorousFlowPeacemanBorehole
     SumQuantityUO = J_out_uo
-    bottom_p_or_t = 9.7 # approx insitu at production point, to prevent aperture closing due to low porepressures
+    bottom_p_or_t = 10.6 # 1MPa + approx insitu at production point, to prevent aperture closing due to low porepressures
     character = 1
     line_length = 1
     point_file = production.xyz
     unit_weight = '0 0 0'
     fluid_phase = 0
+    use_mobility = true
     use_enthalpy = true
-    multiplying_var = 1E10
     variable = frac_T
   []
 []
@@ -297,8 +317,8 @@ injection_rate = 10 # kg/s
   [entire_jacobian]
     type = SMP
     full = true
-    petsc_options_iname = '-pc_type'
-    petsc_options_value = 'lu'
+    petsc_options_iname = '-pc_type -sub_pc_type -sub_pc_factor_shift_type -pc_asm_overlap'
+    petsc_options_value = ' asm      lu           NONZERO                   2             '
   []
 []
 
@@ -308,13 +328,13 @@ injection_rate = 10 # kg/s
   [TimeStepper]
     type = IterationAdaptiveDT
     dt = 1
-    optimal_iterations = 20
-    growth_factor = 1.1
+    optimal_iterations = 10
+    growth_factor = 1.5
     timestep_limiting_postprocessor = 1E8
   []
   end_time = 3E6
-  nl_abs_tol = 1E-2
-  nl_max_its = 100
+  nl_abs_tol = 1E-3
+  nl_max_its = 20
 []
 
 [Outputs]

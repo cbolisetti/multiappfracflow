@@ -44,25 +44,6 @@ Because large changes of temperature and pressure are experienced in this model,
 
 !listing 3dFracture/fracture_only_aperture_changing.i block=FluidProperties
 
-### Injection and production
-
-PorousFlow has many different types of [sinks](porous_flow/sinks.md) and [boundary conditions](porous_flow/boundaries.md) that can be used to model injection and production wells.  To most accurately represent the physics around these points, appropriate boundary conditions should be chosen that closely match the operating parameters of the pump infrastructure employed.  However, before obsessing over such details, it is worth noting that the fundamental assumption underpinning the PorousFlow module --- that the flow is slow --- is likely to be violated close to the wells.  For instance, if 10$\,$kg.s$^{-1}$ (approximately $10^{-2}\,$m$^{3}$.s$^{-1}$) is injected into a fracture of aperture 0.5$\,$cm through a borehole of diameter 15$\,$cm, the fluid velocity is approximately $10^{-2}/0.005/(\pi\times 0.15) \approx 4\,$m.s$^{-1}$, which is certainly turbulent and not laminar Darcy flow.
-
-For this reason, the current model implements the injection and production rather simply.  The injection is implemented using a [DirichletBC](DirichletBC.md) for the temperature at the injection node:
-
-!listing 3dFracture/fracture_only_aperture_changing.i block=BCs
-
-and a [PorousFlowPointSourceFromPostprocessor](PorousFlowPointSourceFromPostprocessor.md) DiracKernel for the fluid injection:
-
-!listing 3dFracture/fracture_only_aperture_changing.i block=inject_fluid
-
-As noted above, the production cannot always be 10$\,$kg.s$^{-1}$ (although it assumes this value at steady-state) so it is implemented using two [PorousFlowPeacemanBoreholes](PorousFlowPeacemanBorehole.md): one withdrawing fluid and the other heat energy:
-
-!listing 3dFracture/fracture_only_aperture_changing.i block=DiracKernels
-
-The `bottom_p_or_t` is chosen so that the borehole don't "suck" water: instead they rely on the injection to increase the porepressure and pump water into the production borehole.  The reason for this is that if the porepressure reduces around the production well (due to a "suck") then the fracture aperture reduces, making it increasingly difficult to extract water.
-
-Notice the large `multiplying_var = 1E10`, which essentially means there are $10^{10}$ boreholes sitting at the production point!  The value of $10^{10}$ was found by trial-and-error.  The value is not extremely critical: reducing `multiplying_var` means the porepressure in the system will increase, for example, a reduction to $10^{9}$ simply increases porepressure by about 2$\,$MPa.  Physically it is reasonable that `multiplying_var` should be greater than 1, because it is unreasonable to imagine a real-life borehole can extract 10$\,$kg.s$^{-1}$ from a fracture of aperture $\approx 1\,$mm.  Hence, lots of such boreholes are needed in the numerical model.  To address these problems in a real implementation, reservoir engineers would design a different injection and production system --- not just the single points on the fracture plane used in this model --- but the `multiplying_var = 1E10` illustrates how difficult it might be to generate commerically-viable flow through these systems.
 
 ### Material properties
 
@@ -79,9 +60,10 @@ The page on [mathematics and physical interpretation](multiapp_fracture_flow_equ
 
 !listing 3dFracture/fracture_only_aperture_changing.i block=porosity
 
-The insitu fracture permeability is assumed to be $10^{-11}\,$m$^{2}$.  It is assumed that this is $r a_{0}^{2}/12$, where $r$ is a factor capturing the roughness of the fracture surfaces, and when the fracture dilates, this becomes $ra^{2}/12$.  Because of the multplication by $a$ (see [here](multiapp_fracture_flow_equations.md)), the value of permeability used in the simulations is $ra^{3}/12$:
+The insitu fracture permeability is assumed to be $10^{-11}\,$m$^{2}$.  It is assumed that this is $r a_{0}^{2}/12$, where $r=0.012$ is a factor capturing the roughness of the fracture surfaces.  It is also assumed that when the fracture dilates, this becomes $ra^{2}/12$.  Because of the multplication by $a$ (see [here](multiapp_fracture_flow_equations.md)), the value of permeability used in the simulations is $ra^{3}/12$:
 
 \begin{equation}
+\label{eqn.frac.perm}
 k = ra^{3}/12 = \frac{ra_{0}^{3}}{12} \frac{a^{3}}{a_{0}^{3}} = 10^{-15} \left(\frac{\phi}{\phi_{0}}\right)^{3} \ .
 \end{equation}
 
@@ -95,14 +77,80 @@ Because there is essentially no rock material within the fracture, the matrix in
 
 !listing 3dFracture/fracture_only_aperture_changing.i block=aq_thermal_conductivity
 
+### Injection and production
+
+The [Thiem equation](https://en.wikipedia.org/wiki/Aquifer_test) may be used to estimate flows to and from the fracture network.  Imagine a single well piercing the fracture network in a normal direction to a fracture plane.  The Thiem equation is
+
+\begin{equation}
+Q = \frac{2\pi \rho k_{\mathrm{3D}} L \Delta P}{\mu \log(R/r_{\mathrm{well}})}
+\end{equation}
+
+Here
+
+- Q is the flow rate to the well, with SI units kg.s$^{-1}$.
+- $\rho$ is the fluid density: in this case $\rho \approx 870\,$kg.m$^{-3}$.
+- $k_{\mathrm{3D}}$ is the fracture permeability: in this case $k_{\mathrm{3D}} = ra^{2}/12$ (it is not the 2D version with the "extra" factor of $a$)
+- $L$ is the length of well piercing the fracture network: in this case $L=a$.
+- $\Delta P$ is the change in pressure resulting from the well pumping: $\Delta P = P_{\mathrm{well}} - P_{0}$.
+- $\mu$ is the fluid viscosity: in this case $\mu \approx 1.4\times 10^{-10}\,$MPa.s$^{-1}$
+- $R$ is the radius of influence of the well: in this case it is appropriate to choose $R\sim 200\,$m since that is the size of the fracture network
+- $r_{\mathrm{well}}$ is the radius of the borehole.  Assume this is $r = 0.075\,$m
+
+[eqn.frac.open] may be used to write $a$ in terms of $\Delta P$.  This analysis is only approximate, but it provides a rough idea of the flow rates to expect, as shown in [table:flowrates].
+
+!table id=table:flowrates caption=Indicative flow rate, aperture and permeability, depending on well pressure
+| $\Delta P = P_{\mathrm{well}} - P_{0}$ (MPa) | Q (kg.s$^{-1}$) | a (mm) | permeability (m$^{2}$) |
+| --- | --- | --- | --- |
+| 0.1 | 0.004 | 0.2 | $4\times 10^{-11}$ |
+| 0.2 | 0.03 | 0.3 | $9\times 10^{-11}$ |
+| 0.5 | 0.5 | 0.6 | $4\times 10^{-10}$ |
+| 1 | 7 | 1 | $10^{-9}$ |
+| 2 | 90 | 2 | $4\times 10^{-9}$ |
+
+Economically-viable flow rates are usually greater than about 10$\,$kg.s$^{-1}$, which is the amount prescribed in the MOOSE input file, below.  This means a pressure change of $\sim 1\,$MPa is expected, and apertures will be around 1$\,$mm.  Note that the porepressure around the *producer* should be around 1$\,$MPa *higher* than insitu, in order for the fluid to flow from the fracture to the production well.  If the production well reduces pressure too much, then according to [eqn.frac.open], the fracture will close in its vicinity, resulting in limited fluid production.  Therefore, the numerical model relies on the injector increasing the porepressure throughout the system (by greater than 1$\,$MPa in most places) and the producer removes excess fluid.
+
+PorousFlow has many different types of [sinks](porous_flow/sinks.md) and [boundary conditions](porous_flow/boundaries.md) that can be used to model injection and production wells.  To most accurately represent the physics around these points, appropriate boundary conditions should be chosen that closely match the operating parameters of the pump infrastructure employed.  However, before obsessing over such details, it is worth noting that the fundamental assumption underpinning the PorousFlow module --- that the flow is slow --- is likely to be violated close to the wells.  For instance, if 10$\,$kg.s$^{-1}$ (approximately $10^{-2}\,$m$^{3}$.s$^{-1}$) is injected into a fracture of aperture 2$\,$mm through a borehole of diameter 15$\,$cm, the fluid velocity is approximately $10^{-2}/0.002/(\pi\times 0.15) \approx 11\,$m.s$^{-1}$, which is certainly turbulent and not laminar Darcy flow.  This also means that the injection and production pressures predicted by the PorousFlow model are likely to be inaccurate.
+
+For this reason, the current model implements the injection and production rather simply.  The injection is implemented using a [DirichletBC](DirichletBC.md) for the temperature at the injection node:
+
+!listing 3dFracture/fracture_only_aperture_changing.i block=BCs
+
+and a [PorousFlowPointSourceFromPostprocessor](PorousFlowPointSourceFromPostprocessor.md) DiracKernel for the fluid injection:
+
+!listing 3dFracture/fracture_only_aperture_changing.i block=inject_fluid
+
+As noted above, the production cannot always be 10$\,$kg.s$^{-1}$ (although it assumes this value at steady-state) so it is implemented using two [PorousFlowPeacemanBoreholes](PorousFlowPeacemanBorehole.md): one withdrawing fluid and the other heat energy.  There is a minor subtlety that can arise when using [PorousFlowPeacemanBoreholes](PorousFlowPeacemanBorehole.md) in lower-dimensional input files.  Peaceman [write the flux](porous_flow/sinks.md) as
+
+\begin{equation}
+f = W \frac{k_{r}\rho}{\mu}(P - P_{\mathrm{well}}) \ .
+\end{equation}
+
+The prefactor, $k_{r}\rho/\mu$ is automatically included when `use_mobility = true`, but Peaceman's "well constant", $W$, is
+
+\begin{equation}
+W = 2\pi k_{\mathrm{3D}}L / \log(r_{e}/r_{\mathrm{well}})
+\end{equation}
+
+Here $k_{\mathrm{3D}} = k/a$ is the "3D" permeability, and $L = a$ is the length of borehole that is piercing the fracture system.  Hence
+
+\begin{equation}
+W = 2\pi k / \log(r_{e}/r_{\mathrm{well}})
+\end{equation}
+
+is the appropriate lower-dimensional form.  This is easily obtained in the MOOSE model by setting `line_length = 1` in the input file, and then MOOSE will compute the well constant correctly:
+
+!listing 3dFracture/fracture_only_aperture_changing.i block=DiracKernels
+
+As mentioned above `bottom_p_or_t` is chosen so that the borehole don't "suck" water: instead they rely on the injection to increase the porepressure and pump water into the production borehole.  The reason for this is that if the porepressure reduces around the production well (due to a "suck") then the fracture aperture reduces, making it increasingly difficult to extract water.
+
 ### Results
 
-The pressure at the injection point rises from its insitu value of around 9.4$\,$MPa to around 12.3$\,$MPa: an increase of 3$\,$MPa, which results in a fracture aperture of 3$\,$mm according to [eqn.frac.open].  This results in permeability increasing by a factor of 27000.
+The pressure at the injection point rises from its insitu value of around 9.4$\,$MPa to around 12.2$\,$MPa: an increase of 3$\,$MPa, which results in a fracture aperture of around 3$\,$mm according to [eqn.frac.open].  This results in permeability increasing by a factor of around 27000.
 
-Some results are shown in [fracture_only_aperture_changing_T_out] and [fracture_only_aperture_changing_P_out].  Thermal breakthrough occurs at around 1.5 hours after injection starts.  These simulations were run using different mesh sizes (by choosing `Mesh/uniform_refine` appropriately) to illustrate the impact of different meshes in this problem.  Two observations are:
+Some results are shown in [fracture_only_aperture_changing_T_out] and [fracture_only_aperture_changing_P_out].  Thermal breakthrough occurs at around 1.5 hours after injection starts.  These simulations were run using different mesh sizes (by choosing `Mesh/uniform_refine` appropriately) to illustrate the impact of different meshes in this problem.  Some observations are:
 
-- The production-point porepressures do not appear to assymptote to an "infinite-resolution" result (the 1.15m results are *not* really close to the 2.3m case).  Numerically, this is due to the mesh-dependence of the strength of the PorousFlowPeacemanBorehole: the "infinite-resolution" limit would see the logarithmic singularity of a point source in 2D.
-- Nevertheless, a mesh with element side-lengths of 10$\,$m is likely to be perfectly adequate for this type of problem, given the likely uncertainties in parameter values.
+- There is an interesting increase of temperature around the production well in the finest-resolution case.  The reason for this is that a thin layer of insitu hot fluid is "squashed" against the fracture ends as the cold fluid invades the fracture (the thin layer is not resolved in the low-resolution cases).  This is also clearly seen in [orbit_T].  The hot fluid cannot escape, and it becomes pressurized, leading to an increase in temperature.  Eventually the porepressure increases to 10.6$\,$MPa and the production well activates, withdrawing the hot fluid, and the near-well area cools.  In regions where there is no production well, the high temperature eventually diffuses.  If the production well were in the middle of a fracture, this interesting phenomenon wouldn't be seen.
+- As mesh resolution is increased, the results appear to be converging to an "infinite-resolution" case.  Given the likely uncertainties in parameter values and the physics of aperture dilation, a mesh with element side-lengths of 10$\,$m is likely to be perfectly adequate for this type of problem.
 
 !media media/fracture_only_aperture_changing_P_out.png
 	style=width:70%;margin:auto;padding-top:2.5%;
