@@ -1,4 +1,5 @@
 [Mesh]
+  uniform_refine = 1
   [generate]
     type = GeneratedMeshGenerator
     dim = 3
@@ -156,7 +157,7 @@
     optimal_iterations = 4
     timestep_limiting_postprocessor = 1E8
   []
-  end_time = 3E6
+  end_time = 1E8
   nl_abs_tol = 1E-2
 []
 
