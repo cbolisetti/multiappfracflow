@@ -177,6 +177,8 @@ Some animations are shown in [orbit_T] and [orbit_aperture].  One month is simul
 
 ## Including the matrix
 
+TODO
+
 Before presenting the input files in detail, the simulation's coupling involves the following steps.
 
 1. Each fracture element must be prescribed with a normal direction, using a [PorousFlowElementNormal](PorousFlowElementNormal.md) AuxKernel.
@@ -247,33 +249,12 @@ The `Transfers` described above are:
 
 ### Results
 
-When using a realistic heat-transfer coefficient, such as [eqn.simple.L] the matrix rapidly heats the injected cool water in the fracture, however smaller $h$ leads to less heating, as shown in [3dFracture_production_T]
-
-!media media/3dFracture_production_T.png
+!media media/matrix_app_T.png
 	style=width:60%;margin:auto;padding-top:2.5%;
-	id=3dFracture_production_T
-	caption=Production temperature from the fracture system when injecting at 0.01g/s, with and without heat transfer from the matrix
+	id=matrix_app_T
+	caption=TODO
 
-The system rapidly reaches equilibrium, where the porepressure is around 20$\,$MPa at the injection well, as shown in [orbit_p].
-
-!media media/orbit_p.mp4
+!media media/matrix_T.mp4
 	style=width:60%;margin:auto;padding-top:2.5%;
-	id=orbit_p
-	caption=Porepressure in the fracture rapidly reaches steady-state with approximately 20MPa at the injection well
-
-For realistic heat-transfer coefficients such as [eqn.simple.L], the injected water is heated from 100$^{\circ}$C to 200$^{\circ}$C within a few metres of the injection well.  This does not produce interesting animations, however, so to get a feel for the system's evolution [orbit_t] shows the results when using an unrealistically small $h$, with $h_{s} = 10^{-3}$ in [eqn.suggested.h.L].  Notice that:
-
-- the injectate does not invade parts of the fracture system
-- the higher regions of the fracture system remain hot, due to the buoyancy of the hot water
-
-!media media/orbit_t.mp4
-	style=width:60%;margin:auto;padding-top:2.5%;
-	id=orbit_t
-	caption=Temperature in the fracture when using an unrealistically small heat-transfer coefficient to illustrate the evolution of the system
-
-The temperature in the matrix does not degrade appreciably for a very long time, due to the matrix having such a huge thermal mass compared with the small amount of water passing through the fracture.  [orbit_t_matrix] shows the evolution of the cooled matrix region when using the unrealistically small heat-transfer coefficient.  When using a realistic value such as [eqn.simple.L], and running the simulation for a few years, the cooled region is within only a few metres of the injection well.
-
-!media media/orbit_t_matrix.mp4
-	style=width:60%;margin:auto;padding-top:2.5%;
-	id=orbit_t_matrix
-	caption=Evolution of the regions of the matrix that suffer more than 0.05degC temperature reduction.  Note these results are using an unrealistically small heat-transfer coefficient.
+	id=matrix_T
+	caption=TODO
