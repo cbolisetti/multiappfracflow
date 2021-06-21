@@ -1,7 +1,7 @@
 injection_rate = 10 # kg/s
 
 [Mesh]
-  uniform_refine = 3
+  uniform_refine = 0
   [cluster34]
     type = FileMeshGenerator
     file = 'Cluster_34.exo'
@@ -107,7 +107,7 @@ injection_rate = 10 # kg/s
 []
 
 [AuxKernels]
-  [normal_dirn_x]
+  [normal_dirn_x_auxk]
     type = PorousFlowElementNormal
     variable = normal_dirn_x
     component = x
@@ -122,7 +122,7 @@ injection_rate = 10 # kg/s
     variable = normal_dirn_z
     component = z
   []
-  [heat_transfer_coefficient]
+  [heat_transfer_coefficient_auxk]
     type = ParsedAux
     variable = heat_transfer_coefficient
     args = 'enclosing_element_normal_length enclosing_element_normal_thermal_cond'
@@ -332,12 +332,13 @@ injection_rate = 10 # kg/s
     growth_factor = 1.5
     timestep_limiting_postprocessor = 1E8
   []
-  end_time = 3E6
+  end_time = 1E8
   nl_abs_tol = 1E-3
   nl_max_its = 20
 []
 
 [Outputs]
+inactive = 'ex'
   print_linear_residuals = false
   csv = true
   [ex]

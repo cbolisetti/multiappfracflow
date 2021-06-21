@@ -147,7 +147,7 @@ As mentioned above `bottom_p_or_t` is chosen so that the borehole don't "suck" w
 
 The pressure at the injection point rises from its insitu value of around 9.4$\,$MPa to around 12.2$\,$MPa: an increase of 3$\,$MPa, which results in a fracture aperture of around 3$\,$mm according to [eqn.frac.open].  This results in permeability increasing by a factor of around 27000.
 
-Some results are shown in [fracture_only_aperture_changing_T_out] and [fracture_only_aperture_changing_P_out].  Thermal breakthrough occurs at around 1.5 hours after injection starts.  These simulations were run using different mesh sizes (by choosing `Mesh/uniform_refine` appropriately) to illustrate the impact of different meshes in this problem.  Some observations are:
+Some results are shown in [fracture_only_aperture_changing_T_out], [fracture_only_aperture_changing_P_out] and [fracture_only_aperture_changing_T_2hrs].  Production commences around 1.75 hours after injection starts.  These simulations were run using different mesh sizes (by choosing `Mesh/uniform_refine` appropriately) to illustrate the impact of different meshes in this problem.  A straightfoward analysis of simulation error as a function of mesh size is not possible, because each simulation also uses a different time-step size.  Nevertheless, some observations are:
 
 - There is an interesting increase of temperature around the production well in the finer-resolution cases.  The reason for this is that a thin layer of insitu hot fluid is "squashed" against the fracture ends as the cold fluid invades the fracture (the thin layer is not resolved in the low-resolution cases).  This is also clearly seen in [orbit_T].  The hot fluid cannot escape, and it becomes pressurized, leading to an increase in temperature.  Eventually the porepressure increases to 10.6$\,$MPa and the production well activates (indicated by the dot in the figures), withdrawing the hot fluid, and the near-well area cools.  In regions where there is no production well, the high temperature eventually diffuses.  If the production well were in the middle of a fracture, this interesting phenomenon wouldn't be seen.
 - As mesh resolution is increased, the results appear to be converging to an "infinite-resolution" case.  Given the likely uncertainties in parameter values and the physics of aperture dilation, a mesh with element side-lengths of 10$\,$m is likely to be perfectly adequate for this type of problem.
@@ -161,6 +161,11 @@ Some results are shown in [fracture_only_aperture_changing_T_out] and [fracture_
 	style=width:70%;margin:auto;padding-top:2.5%;
 	id=fracture_only_aperture_changing_T_out
 	caption=Temperature at the production point in the case where there is no matrix.  The legend's numbers indicate the size of elements used in the simulation.  Dotted lines: before production commences.  Dot: production commences.  Solid lines: during production.
+
+!media media/fracture_only_aperture_changing_T_2hrs.png
+	style=width:70%;margin:auto;padding-top:2.5%;
+	id=fracture_only_aperture_changing_T_2hrs
+	caption=Temperature at the production point 2 hours after injection commences, in the case where there is no matrix, for meshes with different-sized elements.  A straightforward error analysis is not possible because each simulation takes different time-steps.
 
 Some animations are shown in [orbit_T] and [orbit_aperture].  One month is simulated, but steady state is rapidly approached within the first few hours of simulation.   The cold injectate invades most of the fracture network: hot pockets of fluid only remain at the tops of some fractures, due to buoyancy.
 
@@ -177,16 +182,80 @@ Some animations are shown in [orbit_T] and [orbit_aperture].  One month is simul
 
 ## Including the matrix
 
-TODO
+### Matrix physics and material properties
 
-Before presenting the input files in detail, the simulation's coupling involves the following steps.
+Most of the matrix input file is standard by now.  The physics is governed by [PorousFlowFullySaturated](PorousFlowFullySaturated.md)
 
-1. Each fracture element must be prescribed with a normal direction, using a [PorousFlowElementNormal](PorousFlowElementNormal.md) AuxKernel.
-2. The fracture-normal information must be sent from each fracture element to the nearest matrix element, which is implemented using a [MultiAppNearestNodeTransfer](MultiAppNearestNodeTransfer.md) Transfer.
+!listing 3dFracture/matrix_app.i block=PorousFlowFullySaturated
+
+along with the familiar [VectorPostprocessorPointSource](VectorPostprocessorPointSource.md):
+
+!listing 3dFracture/matrix_app.i block=DiracKernels
+
+It is assumed the rock matrix has small porosity of 0.1 and permeability of $10^{-18}\,$m$^{2}$.  The rock density is 2700$\,$kg.m$^{-3}$ with specific heat capacity of 800$\,$J.kg$^{-1}$.K$^{-1}$ and isotropic thermal conductivity of 5$\,$W.m$^{-1}$.K$^{-1}$.  Hence, the `Materials` block is:
+
+!listing 3dFracture/matrix_app.i block=Materials
+
+### Heat transfer coefficients, matrix mesh sizes and time scales
+
+As mentioned in the [mathematical and physical introduction](multiapp_fracture_flow_equations.md) the use of heat transfer coefficients such as
+
+\begin{equation}
+\label{eqn.suggested.h.L}
+h = \frac{2h_{\mathrm{s}}\lambda_{\mathrm{m}}^{nn}L}{h_{\mathrm{s}}L^{2} + 2\lambda_{\mathrm{m}}^{nn}L} \ .
+\end{equation}
+
+is only justified if the matrix element sizes are small enough to resolve the physics of interest.  The time taken for a pulse of heat to travel through the matrix over half-element distance $L$ is
+
+\begin{equation}
+t \sim \frac{c\rho}{\lambda}L^{2} \ .
+\end{equation}
+
+This equation provides a rough idea of the element size needed to accurately resolve physical phenomena.  [table:time_scales] enumerates the time-scales for the case in hand: if $t$ is smaller than the enumerated time-scale then [eqn.suggested.h.L] is inappropriate, so other choices must be made, or the matrix mesh made finer.
+
+!table id=table:time_scales caption=Indicative time-scales for which [eqn.suggested.h.L] will be appropriate, as a function of mesh size
+| $L$ (m) | matrix mesh size (m) | time scale (days) |
+| --- | --- | --- |
+| 10 | 20 | 500 |
+| 5 | 10 | 125 |
+| 2.5 | 5 | 30 |
+
+The heat-transfer is implemented as a [PorousflowHeatMassTransfer](PorousflowHeatMassTransfer.md) Kernel in the fracture input file:
+
+!listing 3dFracture/fracture_only_aperture_changing.i block=Kernels
+
+with $h$ being calculated by the following AuxKernel that implements [eqn.suggested.h.L]:
+
+!listing 3dFracture/fracture_only_aperture_changing.i block=heat_transfer_coefficient_auxk
+
+
+### Coupling and transfers
+
+The simulation's coupling involves the following steps (see also the [page on transfers](multiapp_fracture_flow_transfers.md)).
+
+1. Each fracture element must be prescribed with a normal direction, using a [PorousFlowElementNormal](PorousFlowElementNormal.md) AuxKernel, such as
+
+!listing 3dFracture/fracture_only_aperture_changing.i block=normal_dirn_x_auxk
+
+2. Each matrix element must retrieve the fracture-normal information from the nearest fracture element, which is implemented using a [MultiAppNearestNodeTransfer](MultiAppNearestNodeTransfer.md) Transfer.
+
+!listing 3dFracture/matrix_app.i block=normal_x_from_fracture
+
 3. Each matrix element must be prescribed with a normal length, $L$, using a [PorousFlowElementLength](PorousFlowElementLength.md) AuxKernel and the fracture-normal direction sent to it.
+
+!listing 3dFracture/matrix_app.i block=element_normal_length_auxk
+
 4. Each matrix element must be prescribed with a normal thermal conductivity, $\lambda_{\mathrm{m}}^{nn}$, using the fracture-normal direction sent to it.
-5. Each fracture element must retrieve $L$ and $\lambda_{\mathrm{m}}^{nn}$ from its nearest matrix element.
-6. Each fracture element must calculate $h$ using [eqn.suggested.h.L] or [eqn.simple.L].
+
+!listing 3dFracture/matrix_app.i block=normal_thermal_conductivity_auxk
+
+5. Each fracture element must retrieve $L$ and $\lambda_{\mathrm{m}}^{nn}$ from its nearest matrix element using a [MultiAppNearestNodeTransfer](MultiAppNearestNodeTransfer.md), with blocks such as
+
+!listing 3dFracture/matrix_app.i block=element_normal_length_to_fracture
+
+6. Each fracture element must calculate $h$ using [eqn.suggested.h.L].
+
+!listing 3dFracture/fracture_only_aperture_changing.i block=heat_transfer_coefficient_auxk
 
 These steps could be performed during the simulation initialization, however, it is more convenient to perform them at each time-step.  When these steps have been accomplished, each time-step involves the following (which is also used in the sections above).
 
@@ -195,53 +264,6 @@ These steps could be performed during the simulation initialization, however, it
 3. The heat flowing between the fracture and matrix is transferred using a [MultiAppReporterTransfer](MultiAppReporterTransfer.md) Transfer.
 4. The matrix physics is solved.
 
-
-### The fracture input file
-
-The [PorousFlowFullySaturated](PorousFlowFullySaturated.md) physics is used to model this situation.  [Kuzmin-Turek](kt.md) stabilization is used, and porepressure is measured in MPa.
-
-!listing 3dFracture/fracture_app.i block=PorousFlowFullySaturated
-
-The coupling with the matrix is by the [PorousFlowHeatMassTransfer](PorousflowHeatMassTransfer.md) Kernel
-
-!listing 3dFracture/fracture_app.i block=Kernels
-
-The model assumes all fractures have aperture $a = 0.1\,$mm, although prescribing a block-dependent $a$ is obviously easy in MOOSE (it just makes the input file a lot longer).  All fractures are assumed to have porosity 1.0 and permeability $10^{-11}\,$m$^{2}$.  Because there is no "matrix" (rock material) inside the fractures, the matrix specific heat capacity is zero (in the matrix input file the matrix specific heat capacity is non zero) and the thermal conductivity is due to water, $0.6\,$W.m$^{-1}$.K$^{-1}$.  Remembering that all fracture properties much be multiplied by $a$ (see [mathematics and physical interpretation](multiapp_fracture_flow_equations.md)), the `Materials` block reads:
-
-!listing 3dFracture/fracture_app.i block=Materials
-
-This simulation involves considerable changes of water pressure and temperature, so a high-precision equation of state is used:
-
-!listing 3dFracture/fracture_app.i block=Modules
-
-PorousFlow contains many different [sources and sinks](sinks.md) that could be used to implement the injection and production.  In this case, temperature is fixed at the injection node using a [DirichletBC](DirichletBC.md) and a constant rate of fluid is injected using a [PorousFlowPointSourceFromPostprocessor](PorousFlowPointSourceFromPostprocessor.md) Dirac Kernel.  Two [PorousFlowPolyLineSink](PorousFlowPolyLineSink.md) Dirac Kernels extract mass and heat (the latter with `use_enthalpy = true`) from the production node.  These are designed to keep the porepressure around 10$\,$MPa, ramping up the production rate if the porepressure exceeds this, or reducing it if the porepressure is less than 10$\,$MPa.  The relevant blocks are:
-
-!listing 3dFracture/fracture_app.i block=BCs
-
-!listing 3dFracture/fracture_app.i block=DiracKernels
-
-The above is run-of-the-mill PorousFlow material.  The coupling with the matrix is the most important to the current page.  The steps in the coupling were outlined above.  The `AuxKernels` needed are:
-
-!listing 3dFracture/fracture_app.i block=AuxKernels
-
-Notice the expression in the `heat_transfer_coefficient` function.  In the case at hand, if [eqn.simple.L] is used then the matrix very rapidly heats up the water in the fracture, leading to rather boring (though realistic) results.  Hence, various values for $h_{s}$ have been provided.
-
-### The matrix input file
-
-Most of the matrix input file is standard by now.  The physics is governed by [PorousFlowFullySaturated](PorousFlowFullySaturated.md) along with the familiar [VectorPostprocessorPointSource](VectorPostprocessorPointSource.md):
-
-!listing 3dFracture/matrix_app.i block=PorousFlowFullySaturated
-
-!listing 3dFracture/matrix_app.i block=DiracKernels
-
-It is assumed the rock matrix has small porosity of 0.1 and permeability of $10^{-18}\,$m$^{2}$.  The rock density is 2700$\,$kg.m$^{-3}$ with specific heat capacity of 800$\,$J.kg$^{-1}$.K$^{-1}$ and isotropic thermal conductivity of 5$\,$W.m$^{-1}$.K$^{-1}$.  Hence, the `Materials` block is:
-
-!listing 3dFracture/matrix_app.i block=Materials
-
-The matrix needs to compute $\lambda_{\mathrm{m}}^{nn}$ and $L$ to send these to the fracture.  This is accomplished using the following:
-
-!listing 3dFracture/matrix_app.i block=AuxKernels
-
 The `Transfers` described above are:
 
 !listing 3dFracture/matrix_app.i block=Transfers
@@ -249,12 +271,34 @@ The `Transfers` described above are:
 
 ### Results
 
+[matrix_app_T_short] and [matrix_app_T] show the temperature at the production bore.  It is clear that the matrix provides substantial heat-energy to the injectate, when these results are compared with [fracture_only_aperture_changing_T_out].  However, as time proceeds, the cold injectate cools the surrounding matrix, leading to cooler production temperatures.  These figures show how the results depend on the matrix and fracture mesh sizes.  Keep in mind [table:time_scales], which tabulates the time scale at which the results should become accurate (eg, the "20m, 9.2m" case is not expected to be accurate for time-scales less than about 500 days).  Convergence to the infinite-resolution limit is obviously achieved.
+
+!media media/matrix_app_T_short.png
+	style=width:60%;margin:auto;padding-top:2.5%;
+	id=matrix_app_T_short
+	caption=Short-term temperature at the production well.  The first number in the legend is the mesh element size, while the second is the fracture element size.
+
 !media media/matrix_app_T.png
 	style=width:60%;margin:auto;padding-top:2.5%;
 	id=matrix_app_T
-	caption=TODO
+	caption=Long-term temperature at the production well.  The first number in the legend is the mesh element size, while the second is the fracture element size.
+
+[matrix_T] shows the evolution of the cooled matrix material.  By 1000 days, an envelope of 10--20m around the fracture system has cooled by more than 10degC.  Some parts of the fracture are not cooled at all by the injectate, most particularly those at the top of the network.
 
 !media media/matrix_T.mp4
 	style=width:60%;margin:auto;padding-top:2.5%;
 	id=matrix_T
-	caption=TODO
+	caption=Evolution of the cooled matrix material.  Colors on the fracture system show fracture temperature.  The small boxes are matrix elements that have cooled by more than 10degC.  The green color-bar shows the time simulated.
+
+## Extensions and comments
+
+TODO
+
+- porosity and perm as fcn of a
+- mechanics
+- fluid transfer
+- near well inaccuracy different physics
+- different mesh sizes meaning different transfers
+- different apertures on different parts of the dfn
+- modelling real pumping
+

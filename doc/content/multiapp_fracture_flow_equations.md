@@ -78,16 +78,17 @@ Just as the fracture may be considered two-dimensional (implemented by including
 	id=skin_two_nodes
 	caption=An object of temperature $T_{s}$ sits a distance $L_{0}$ from a finite-element node of temperature $T_{0}$, and a distance $L_{1}$ from a node of temperature $T_{1}$.
 
-The flow from the fictitious "skin" object to each matrix finite-element nodes is governed by the heat equation [eqn.3D.heat.eqn]:
+The flow from the fictitious "skin" object to each matrix finite-element nodes is governed by the heat equation.  In the linear limit, [eqn.3D.heat.eqn] implies
 
 \begin{equation}
 \begin{aligned}
+\label{eqn.linear.q0q1}
 Q_{0} &= \lambda \frac{T_{s} - T_{0}}{L_{0}} \ , \\
 Q_{1} &= \lambda \frac{T_{s} - T_{1}}{L_{1}} \ .
 \end{aligned}
 \end{equation}
 
-At steady state $Q_{s} = Q_{0} + Q_{1}$, which allows $T_{s}$ to be eliminated and yields the heat-loss from the fracture:
+Assuming the sum of these equals $Q_{s}$, that is $Q_{s} = Q_{0} + Q_{1}$, allows $T_{s}$ to be eliminated and yields the heat-loss from the fracture:
 \begin{equation}
 Q = \frac{h_{\mathrm{s}}\lambda (L_{0} + L_{1})}{h_{\mathrm{s}}L_{0}L_{1} + \lambda(L_{0} + L_{1})} \left( \frac{L_{1}}{L_{0} + L_{1}}(T_{f} - T_{0}) + \frac{L_{0}}{L_{0} + L_{1}}(T_{f} - T_{1}) \right) \ .
 \end{equation}
@@ -96,7 +97,10 @@ Notice that the prefactors $L_{1}/(L_{0}+L_{1})$ are exactly what a linear-lagra
 h = \frac{h_{\mathrm{s}}\lambda (L_{0} + L_{1})}{h_{\mathrm{s}}L_{0}L_{1} + \lambda(L_{0} + L_{1})} \ .
 \end{equation}
 
-This may be generalised to the 2D-3D situation.  While [skin_two_nodes] is only a 1D picture, flow from the fracture to the matrix only occurs in the normal direction, so it also represents the 2D-3D situation.  With an arbitrary-shaped element containing a portion of a fracture, the heat flows to each node, and hence $h$, depend on the shape of the element.  However, following the approach of the Peaceman borehole TODO_LINK, the following rule-of-thumb is suggested for MOOSE simulations:
+!alert note
+Notice a key assumptions made in the presentation above --- the linear approximation of [eqn.linear.q0q1], where it is assumed that the matrix element sizes are small enough to resolve the physics of interest.  This means that phenomena associated with short-time, small-scale physics won't be resolvable in models with large elements, when using the heat-transfer coefficients recommended in this page.  This is because that in various real-life scenarios there may be *no* heat flow between the "0" position and the skin even if $T_{s}\neq T_{0}$ (contradicting [eqn.linear.q0q1]) because, for instance, changes of $T_{s}$ take some time to be felt by the "0" position.  The solution is to use smaller elements to resolve this short-time, small-scale phenomena.
+
+The same analysis may be performed in the 2D-3D situation.  While [skin_two_nodes] is only a 1D picture, flow from the fracture to the matrix only occurs in the normal direction, so it also represents the 2D-3D situation.  With an arbitrary-shaped element containing a portion of a fracture, the heat flows to each node, and hence $h$, depend on the shape of the element.  However, following the approach of the Peaceman borehole TODO_LINK, the following rule-of-thumb is suggested for MOOSE simulations:
 
 \begin{equation}
 \label{eqn.suggested.h}

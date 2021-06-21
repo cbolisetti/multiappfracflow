@@ -1,5 +1,5 @@
 [Mesh]
-  uniform_refine = 1
+  uniform_refine = 0
   [generate]
     type = GeneratedMeshGenerator
     dim = 3
@@ -126,12 +126,12 @@
 []
 
 [AuxKernels]
-  [normal_thermal_conductivity]
+  [normal_thermal_conductivity_auxk]
     type = ConstantAux
     variable = normal_thermal_conductivity
     value = 5 # very simple in this case
   []
-  [element_normal_length]
+  [element_normal_length_auxk]
     type = PorousFlowElementLength
     variable = element_normal_length
     direction = 'fracture_normal_x fracture_normal_y fracture_normal_z'
@@ -163,7 +163,7 @@
 
 [Outputs]
   print_linear_residuals = false
-  exodus = true
+  exodus = false
 []
 
 [MultiApps]
