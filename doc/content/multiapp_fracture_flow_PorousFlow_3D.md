@@ -220,7 +220,7 @@ This equation provides a rough idea of the element size needed to accurately res
 | 5 | 10 | 125 |
 | 2.5 | 5 | 30 |
 
-The heat-transfer is implemented as a [PorousflowHeatMassTransfer](PorousflowHeatMassTransfer.md) Kernel in the fracture input file:
+The heat-transfer is implemented as a [PorousFlowHeatMassTransfer](PorousFlowHeatMassTransfer.md) Kernel in the fracture input file:
 
 !listing 3dFracture/fracture_only_aperture_changing.i block=Kernels
 
@@ -292,13 +292,33 @@ The `Transfers` described above are:
 
 ## Extensions and comments
 
-TODO
+This page has described a sample model and workflow for simulating mixed-dimensional, fractured porous systems with PorousFlow.  Various simplifying assumptions have been made, and these may need to be modified in a more sophisticated approach.
 
-- porosity and perm as fcn of a
-- mechanics
-- fluid transfer
-- near well inaccuracy different physics
-- different mesh sizes meaning different transfers
-- different apertures on different parts of the dfn
-- modelling real pumping
+- One of the key assumptions is that fracture aperture is proportional to porepressure change, [eqn.frac.open], and the value of $A = 10^{-3}\,$m.MPa$^{-1}$ was simply chosen to make the results "look reasonable".  Ideally, this assumption and value of $A$ should be checked experimentally.  Alternatively, modellers may implement other well-known equations, which may require a small amount of code development in PorousFlow.
+
+- It is likely that the aperture is temperature-dependent, since when the cooled matrix contracts, the fracture will dilate.  This effect (if linear) can easily be modelled using [PorousFlowPorosityLinear](PorousFlowPorosityLinear.md).
+
+- No mechanical effects have been included, except via [eqn.frac.open].  A different approach would be to treat the matrix as a THM system, transferring the fracture porepressure as an "external" normal stress, $\sigma_{nn}$, applied in matrix elements containing the fracture.  This could be applied as [VectorPostprocessorPointSources](VectorPostprocessorPointSource.md).  The matrix deforms in response, and the normal component of the strain, $\epsilon_{nn}$, could be interpreted as an aperture changed, and transferred back to the fracture.  This approach contains a few subtleties:
+
+  - Is matrix strain a good measure of fracture opening?
+  - Fracture porepressure is a nodal quantity, so for non-planar fractures the normal direction is undefined.
+  - Careful consideration of fracture area contained by a matrix element might be advantageous.
+  - Attributing strain in cases where a single matrix element contains multiple fracture elements might be complicated
+  - If fracture elements are huge compared with matrix elements, only the matrix element that happens to contain a fracture node will experience the additional $\sigma_{nn}$, while only the matrix element that lies nearest the fracture centroid will provide $\epsilon_{nn}$.
+
+- An alternate way of directly including mechanics could be to use the XFEM module and explicitly break matrix elements when they contain fracture elements.  The advantage over the previous approach is that it's easy to attribute strain to fracture dilation, but the disadvantage is the complexity of this approach.
+
+- Only heat transfer between the fracture and matrix has been considered.  Using the methodology outlined in the [mathematics page](multiapp_fracture_flow_PorousFlow_3D.md), both fluid transfer and advective heat transfer could be included.
+
+- Each fracture has been assumed to have an insitu aperture of 0.1$\,$mm.  Instead, each fracture could have a unique insitu aperture, and a unique scaling with pressure, by using different material blocks (subdomains).
+
+- Fracture porosity has been assumed to be independent of $a$ (and hence the 2D version is $\propto a$), while permeability has been assumed to scale as $a^{2}$ (hence the 2D version is $\propto a^{3}$).  More elaborate versions are certainly possible, but possibly need to be coded into PorousFlow.
+
+- The matrix porosity and permeability have been assumed constant and isotropic.  Instead, pressure, temperature and strain-dependent versions already coded into PorousFlow could be used.
+
+- It is likely that the near-well physics is not accurately captured by PorousFlow, and different physics could be used instead if near-well phenomena are of interest.
+
+- [table:time_scales] and the results make it clear that large matrix elements result in "short"-time inaccuracies.  It is therefore tempting to refine the matrix mesh around the fracture network.  As described in the [transfers page](multiapp_fracture_flow_transfers.md), it might be advantageous to use different Transfers if the relative mesh sizes are altered.  In the case where matrix elements are smaller than fracture elements, only those few matrix elements that contain fracture nodes will receive heat energy from the fracture system, while only those that lie at the centroid of a fracture element contribute to the aperture calculation.
+
+- The injection and production pumps have been modelled in a very simplistic way, and they only act on the fracture system.  It would be relatively straightforward to use different pumping strategies.
 
