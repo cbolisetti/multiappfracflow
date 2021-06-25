@@ -50,16 +50,16 @@ T_{m}(t, x) &= \frac{1 - e^{-2ht}}{4\sqrt{\pi t}}\exp\left(-\frac{x^{2}}{4t}\rig
 
 ## A single variable (no heat transfer)
 
-When $h=0$, the system becomes decoupled.  The solution is $T_{m} = 0$, and $T_{f}$ given by the fundamental solution.  This may be solved by MOOSE without any MultiApp system using the following input file
+When $h=0$, the system becomes decoupled and no heat will be transferred from the fracture to the matrix.  The solution is $T_{m} = 0$, and $T_{f}$ given by the fundamental solution.  This may be solved by MOOSE without any MultiApp system using the following input file
 
 !listing diffusion_multiapp/single_var.i
 
-The result depends on the spatial and temporal discretisation.  The temporal-discretisation dependence is shown in [diffusion_single_var]
+The result depends on the spatial and temporal discretisation.  The temporal-discretisation dependence of $T_{f}$ is shown in [diffusion_single_var]
 
 !media media/diffusion_single_var.png
 	style=width:60%;margin:auto;padding-top:2.5%;
 	id=diffusion_single_var
-	caption=Decoupled case: comparison of the analytical solution with the MOOSE results as computed using no MultiApp
+	caption=Decoupled case fracture Temperature: comparison of the analytical solution with the MOOSE results as computed using no MultiApp
 
 ## Two coupled variables (no MultiApp)
 
@@ -67,12 +67,12 @@ The system is coupled when $h\neq 0$.  A MultiApp approach is not strictly neede
 
 !listing diffusion_multiapp/two_vars.i
 
-The result depends on the spatial and temporal discretisation.  The temporal-discretisation dependence is shown in [diffusion_two_vars].  Notice that the matrix has removed heat from the fracture, so the temperature is decreased compared with the $h=0$ case.
+The result for $T_{f}$ depends on the spatial and temporal discretisation.  The temporal-discretisation dependence is shown in [diffusion_two_vars].  Notice that the matrix has removed heat from the fracture, so the temperature is decreased compared with the $h=0$ case (i.e. $T_{f}(x=0)\approx0.02$ in [diffusion_two_vars] which is lower than it was for the uncoulpled case with $h=0$ shown in [diffusion_single_var] where $T_{f}(x=0)\approx0.03$).
 
 !media media/diffusion_two_vars.png
 	style=width:60%;margin:auto;padding-top:2.5%;
 	id=diffusion_two_vars
-	caption=Coupled case: comparison of the analytical solution with the MOOSE results as computed using no MultiApp
+	caption=Coupled case fracture Temperature: comparison of the analytical solution with the MOOSE results as computed using no MultiApp
 
 ## A MultiApp approach
 

@@ -39,7 +39,7 @@ This equation (multiplied by the test functions) gets integrated over the elemen
 where $a$ is the fracture thickness (aperture), and $\tilde{\nabla}$ are derivatives transverse to the fracture.  This equation is integrated (by MOOSE) over the fracture-element 2D area in the finite-element method.
 
 !alert note
-The preceeding equation implies all the Kernels for heat and hass flow in the fracture system must be multiplied by the fracture aperture $a$.   That is, in the MOOSE input file governing the 2D physics, the coefficient of the CoefTimeDerivative Kernel is $ac$, and the coefficient of the AnisotropicDiffusion is $a\lambda$.   If tensorial quantities such as $\lambda$ or the permeability tensor are anisotropic, they need to be expressed in 3D space.
+The preceeding equation implies all the Kernels for heat and mass flow in the fracture system must be multiplied by the fracture aperture $a$.   That is, in the MOOSE input file governing the 2D physics, the coefficient of the [CoefTimeDerivative](CoefTimeDerivative.md) Kernel is $ac$, and the coefficient of the [AnisotropicDiffusion](AnisotropicDiffusion.md) is $a\lambda$.   If tensorial quantities such as $\lambda$ or the permeability tensor are anisotropic, they need to be expressed in 3D space.
 
 ### Coupling
 
@@ -88,7 +88,7 @@ Q_{1} &= \lambda \frac{T_{s} - T_{1}}{L_{1}} \ .
 \end{aligned}
 \end{equation}
 
-Assuming the sum of these equals $Q_{s}$, that is $Q_{s} = Q_{0} + Q_{1}$, allows $T_{s}$ to be eliminated and yields the heat-loss from the fracture:
+Assuming the sum of these equals $Q_{s}$, that is $Q_{s} = Q_{0} + Q_{1}$, allows $T_{s}$ to be eliminated by combining [heat.transfer.skin] and [eqn.linear.q0q1] (FIXME  Is this correct Andy?  I added that eqn 4 was used in 5 but I can't eliminate T_s.  Are there other assumptions?) and yields the heat-loss from the fracture:
 \begin{equation}
 Q = \frac{h_{\mathrm{s}}\lambda (L_{0} + L_{1})}{h_{\mathrm{s}}L_{0}L_{1} + \lambda(L_{0} + L_{1})} \left( \frac{L_{1}}{L_{0} + L_{1}}(T_{f} - T_{0}) + \frac{L_{0}}{L_{0} + L_{1}}(T_{f} - T_{1}) \right) \ .
 \end{equation}
@@ -98,9 +98,9 @@ h = \frac{h_{\mathrm{s}}\lambda (L_{0} + L_{1})}{h_{\mathrm{s}}L_{0}L_{1} + \lam
 \end{equation}
 
 !alert note
-Notice a key assumptions made in the presentation above --- the linear approximation of [eqn.linear.q0q1], where it is assumed that the matrix element sizes are small enough to resolve the physics of interest.  This means that phenomena associated with short-time, small-scale physics won't be resolvable in models with large elements, when using the heat-transfer coefficients recommended in this page.  This is because that in various real-life scenarios there may be *no* heat flow between the "0" position and the skin even if $T_{s}\neq T_{0}$ (contradicting [eqn.linear.q0q1]) because, for instance, changes of $T_{s}$ take some time to be felt by the "0" position.  The solution is to use smaller elements to resolve this short-time, small-scale phenomena.  The [small fracture network model](multiapp_fracture_flow_PorousFlow_3D.md) provides an example.
+Notice a key assumptions made in the presentation above --- the linear approximation of [eqn.linear.q0q1], where it is assumed that the matrix element sizes are small enough to resolve the physics of interest.  This means that phenomena associated with short-time, small-scale physics won't be resolvable in models with large elements, when using the heat-transfer coefficients recommended in this page.  This is because that in various real-life scenarios there may be *no* heat flow between the "0" position and the skin even if $T_{s}\neq T_{0}$ (contradicting [eqn.linear.q0q1] ) because, for instance, changes of $T_{s}$ take some time to be felt by the "0" position.  The solution is to use smaller elements to resolve this short-time, small-scale phenomena.  The [small fracture network model](multiapp_fracture_flow_PorousFlow_3D.md) provides an example.
 
-The same analysis may be performed in the 2D-3D situation.  While [skin_two_nodes] is only a 1D picture, flow from the fracture to the matrix only occurs in the normal direction, so it also represents the 2D-3D situation.  With an arbitrary-shaped element containing a portion of a fracture, the heat flows to each node, and hence $h$, depend on the shape of the element.  However, following the approach of the Peaceman borehole TODO_LINK, the following rule-of-thumb is suggested for MOOSE simulations:
+The same analysis may be performed in the 2D-3D situation.  While [skin_two_nodes] is only a 1D picture, flow from the fracture to the matrix only occurs in the normal direction, so it also represents the 2D-3D situation.  With an arbitrary-shaped element containing a portion of a fracture, the heat flows to each node, and hence $h$, depend on the shape of the element.  However, following the approach of the Peaceman borehole TODO_LINK[Peaceman borehole](PorousFlowPeacemanBorehole.md), the following rule-of-thumb is suggested for MOOSE simulations:
 
 \begin{equation}
 \label{eqn.suggested.h}
@@ -113,7 +113,7 @@ where $h$ depends on the matrix element surrounding the fracture:
 - $L_{\mathrm{right}}$ is the average of the distances between the fracture and the nodes that lie on its right side;
 - $L_{\mathrm{left}}$ is the average of the distances between the fracture and the nodes that lie on its left side (opposite the right side).
 
-The result [eqn.suggested.h] depends on $L_{\mathrm{left}}$ and $L_{\mathrm{right}}$.  In most settings, it is appropriate to assume that $L_{\mathrm{left}} = L_{\mathrm{right}} = L$ since this corresponds to making a shift of the fracture position by an amount less than the finite-element size.  Since the accuracy of the finite-element scheme is governed by the element size, such small shifts introduce errors that are smaller than the finite-element error.  This means [eqn.suggested.h] reads
+The result of [eqn.suggested.h] depends on $L_{\mathrm{left}}$ and $L_{\mathrm{right}}$.  In most settings, it is appropriate to assume that $L_{\mathrm{left}} = L_{\mathrm{right}} = L$ since this corresponds to making a shift of the fracture position by an amount less than the finite-element size.  Since the accuracy of the finite-element scheme is governed by the element size, such small shifts introduce errors that are smaller than the finite-element error.  This means [eqn.suggested.h] reads
 
 \begin{equation}
 \label{eqn.suggested.h.L}
@@ -129,13 +129,14 @@ h = \frac{2\lambda_{\mathrm{m}}^{nn}}{L + 2s/c} \rightarrow \frac{2\lambda_{\mat
 
 where the final limit is for $s \ll L$, which is likely to be reasonably correct in most simulations.
 
-Finally, notice that if $a A \gg V$, where $A$ is now the fracture area modelled by one finite-element fracture node, and $V$ is the volume modelled by one finite-element matrix node, then the single fracture node can apply a lot of heat to the "small" matrix node, which will likely cause numerical instability if $\Delta t$ is too large, in the MultiApp approach.
+Finally, notice that if $a A\gg V$, (FIXME  Which equation above gives this limit?  Is this describing fracture mesh that is much coarser than the matrix mesh?  I don't think this could happen, $a$ is so much smaller than the size of a matrix element.  This would mean the matrix element is the size of the fracture aperture) where $A$ is now the fracture area modelled by one finite-element fracture node, and $V$ is the volume modelled by one finite-element matrix node, then the single fracture node can apply a lot of heat to the "small" matrix node, which will likely cause numerical instability if $\Delta t$ is too large, in the MultiApp approach.
 
 ## Mass flow
 
 A "mass-transfer coefficient" $h^{\mathrm{mass}}$ may be used to model fluid mass transfer between the fracture and matrix.  The equations for all fluid phases are structurally identical, but just have different numerical values for viscosity, relative permeability, etc, so in this section consider just one phase.  Define the potential $\Phi$ (with SI units Pa) by
 
 \begin{equation}
+\label{eqn.flow.potential}
 \Phi = P + \rho g z
 \end{equation}
 
@@ -173,8 +174,8 @@ where $h^{\mathrm{mass}}$ depends on the matrix element surrounding the fracture
 - $L_{\mathrm{right}}$ is the average of the distances between the fracture and the nodes that lie on its right side.
 - $L_{\mathrm{left}}$ is the average of the distances between the fracture and the nodes that lie on its left side (opposite the right side).
 
-This appears in the mass-transfer: $Q^{\mathrm{mass}} = h^{\mathrm{mass}}(\Phi_{f} - \Phi_{m})$, where $\Phi = P + \rho g z$.
-
+This appears in the mass-transfer: $Q^{\mathrm{mass}} = h^{\mathrm{mass}}(\Phi_{f} - \Phi_{m})$, where $\Phi$ is given in [eqn.flow.potential].
+(FIXME Where does this equation come from where Phi_skin is replace with Phi_matrix)
 The arguments that led to [eqn.suggested.h.L] and [eqn.simple.L] lead in this case to
 
 \begin{equation}

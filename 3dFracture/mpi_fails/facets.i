@@ -266,6 +266,7 @@ twice_injection_rate = ${fparse 2*injection_rate}
     growth_factor = 1.1
     timestep_limiting_postprocessor = 1E8
   []
+  num_steps=1
   end_time = 3E6
   nl_abs_tol = 1E-6
   nl_max_its = 10

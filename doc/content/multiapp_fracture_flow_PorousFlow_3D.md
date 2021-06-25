@@ -21,7 +21,7 @@ A sample PorousFlow simulation through the small 3D fracture network shown in [o
 - the temperature is 200$^{\circ}$C;
 - injection is into the fracture network only, through one point, at a rate of $10\,$kg.s$^{-1}$ and temperature of 100$^{\circ}$C;
 - production is from the fracture network only, through one point, at a rate of approximately $10\,$kg.s$^{-1}$ (it cannot be exactly $10\,$kg.s$^{-1}$ initially because this causes large porepressure reductions due to thermal contraction of water and because the aperture increases in response to the injection);
-- the fracture aperture dilates elastically in response to enhanced porpressure;
+- the fracture aperture dilates elastically in response to enhanced porepressure;
 - only heat energy is transferred between the fracture and the matrix: the matrix heats the cool water injected into the fracture network.
 
 
@@ -141,13 +141,13 @@ is the appropriate lower-dimensional form.  This is easily obtained in the MOOSE
 
 !listing 3dFracture/fracture_only_aperture_changing.i block=DiracKernels
 
-As mentioned above `bottom_p_or_t` is chosen so that the borehole don't "suck" water: instead they rely on the injection to increase the porepressure and pump water into the production borehole.  The reason for this is that if the porepressure reduces around the production well (due to a "suck") then the fracture aperture reduces, making it increasingly difficult to extract water.
+As mentioned above `bottom_p_or_t` is chosen so that the borehole doesn't "suck" water: instead they rely on the injection to increase the porepressure and pump water into the production borehole.  The reason for this is that if the porepressure reduces around the production well (due to a "suck") then the fracture aperture reduces, making it increasingly difficult to extract water.
 
 ### Results
 
 The pressure at the injection point rises from its insitu value of around 9.4$\,$MPa to around 12.2$\,$MPa: an increase of 3$\,$MPa, which results in a fracture aperture of around 3$\,$mm according to [eqn.frac.open].  This results in permeability increasing by a factor of around 27000.
 
-Some results are shown in [fracture_only_aperture_changing_T_out], [fracture_only_aperture_changing_P_out] and [fracture_only_aperture_changing_T_2hrs].  Production commences around 1.75 hours after injection starts.  These simulations were run using different mesh sizes (by choosing `Mesh/uniform_refine` appropriately) to illustrate the impact of different meshes in this problem.  A straightfoward analysis of simulation error as a function of mesh size is not possible, because each simulation also uses a different time-step size.  Nevertheless, some observations are:
+Some results are shown in [fracture_only_aperture_changing_P_out], [fracture_only_aperture_changing_T_out] and [fracture_only_aperture_changing_T_2hrs].  Production commences around 1.75 hours after injection starts.  These simulations were run using different mesh sizes (by choosing `Mesh/uniform_refine` appropriately) to illustrate the impact of different meshes in this problem.  A straightfoward analysis of simulation error as a function of mesh size is not possible, because each simulation also uses a different time-step size.  Nevertheless, some observations are:
 
 - There is an interesting increase of temperature around the production well in the finer-resolution cases.  The reason for this is that a thin layer of insitu hot fluid is "squashed" against the fracture ends as the cold fluid invades the fracture (the thin layer is not resolved in the low-resolution cases).  This is also clearly seen in [orbit_T].  The hot fluid cannot escape, and it becomes pressurized, leading to an increase in temperature.  Eventually the porepressure increases to 10.6$\,$MPa and the production well activates (indicated by the dot in the figures), withdrawing the hot fluid, and the near-well area cools.  In regions where there is no production well, the high temperature eventually diffuses.  If the production well were in the middle of a fracture, this interesting phenomenon wouldn't be seen.
 - As mesh resolution is increased, the results appear to be converging to an "infinite-resolution" case.  Given the likely uncertainties in parameter values and the physics of aperture dilation, a mesh with element side-lengths of 10$\,$m is likely to be perfectly adequate for this type of problem.
@@ -196,6 +196,8 @@ It is assumed the rock matrix has small porosity of 0.1 and permeability of $10^
 
 !listing 3dFracture/matrix_app.i block=Materials
 
+The matrix input file transfers data to the same fracture input file used in the previous section for the fully insulated fracture.
+
 ### Heat transfer coefficients, matrix mesh sizes and time scales
 
 As mentioned in the [mathematical and physical introduction](multiapp_fracture_flow_equations.md) the use of heat transfer coefficients such as
@@ -205,15 +207,15 @@ As mentioned in the [mathematical and physical introduction](multiapp_fracture_f
 h = \frac{2h_{\mathrm{s}}\lambda_{\mathrm{m}}^{nn}L}{h_{\mathrm{s}}L^{2} + 2\lambda_{\mathrm{m}}^{nn}L} \ .
 \end{equation}
 
-is only justified if the matrix element sizes are small enough to resolve the physics of interest.  The time taken for a pulse of heat to travel through the matrix over half-element distance $L$ is
+is only justified if the matrix element sizes are small enough to resolve the physics of interest (FIXME  what $h$ is used if matrix elements are larger?).  The time taken for a pulse of heat to travel through the matrix over half-element distance $L$ is
 
 \begin{equation}
 t \sim \frac{c\rho}{\lambda}L^{2} \ .
 \end{equation}
 
-This equation provides a rough idea of the element size needed to accurately resolve physical phenomena.  [table:time_scales] enumerates the time-scales for the case in hand: if $t$ is smaller than the enumerated time-scale then [eqn.suggested.h.L] is inappropriate, so other choices must be made, or the matrix mesh made finer.
+This equation provides a rough idea of the element size needed to accurately resolve physical phenomena (FIXME  how do you relate $t$ from the above equation to the timestep size.  Should $dt=t/10$?  That is what we use for dynamics).  [table:time_scales] enumerates the time-scales for the case in hand: if $t$ is smaller than the enumerated time-scale then [eqn.suggested.h.L] is inappropriate, so other choices must be made, or the matrix mesh made finer. (FIXME  if the matrix mesh is made finer, the timestep should also be decreased?)
 
-!table id=table:time_scales caption=Indicative time-scales for which [eqn.suggested.h.L] will be appropriate, as a function of mesh size
+!table id=table:time_scales caption=Minimum time-scales for which [eqn.suggested.h.L] will be appropriate, as a function of matrix mesh size
 | $L$ (m) | matrix mesh size (m) | time scale (days) |
 | --- | --- | --- |
 | 10 | 20 | 500 |
@@ -241,11 +243,17 @@ The simulation's coupling involves the following steps (see also the [page on tr
 
 !listing 3dFracture/matrix_app.i block=normal_x_from_fracture
 
-3. Each matrix element must be prescribed with a normal length, $L$, using a [PorousFlowElementLength](PorousFlowElementLength.md) AuxKernel and the fracture-normal direction sent to it.
+3. Each matrix element must be prescribed with a normal length, $L$, using a [PorousFlowElementLength](PorousFlowElementLength.md) AuxKernel and the fracture-normal direction sent to it. (FIXME  I wonder if this matters since L could vary from L to sqrt(3)L.  For an orthogonal fracture, the fracture nodes would be L away from the edge of the matrix element no matter where the fracture node is in the matrix.  For the case with a skew crack, The distance would be sqrt(3)L for the center fracture node but would then decrease to maybe about zero, for fracture nodes near the corner of the matrix.  I wonder if this would just average out to L for the whole element.  but this would be for fracture nodes at the center of the elemen.  Which n would be used for an element with multiple fractures?)
 
 !listing 3dFracture/matrix_app.i block=element_normal_length_auxk
 
-4. Each matrix element must be prescribed with a normal thermal conductivity, $\lambda_{\mathrm{m}}^{nn}$, using the fracture-normal direction sent to it.
+4. Each matrix element must be prescribed with a normal thermal conductivity, $\lambda_{\mathrm{m}}^{nn}$, using the fracture-normal direction, $\boldsymbol{n}$, received from the transfer using
+
+\begin{equation}
+ \lambda_{\mathrm{m}}^{nn}=\boldsymbol{n}\cdot\lambda_{\mathrm{m}}\cdot\boldsymbol{n}
+\end{equation}
+
+where $\lambda_{\mathrm{m}}$ is the matrix material's $3\times 3$ anisotropic thermal conductivity tensor.  The below input block assumes an isotropic matrix thermal conductivity.
 
 !listing 3dFracture/matrix_app.i block=normal_thermal_conductivity_auxk
 
@@ -258,6 +266,7 @@ The simulation's coupling involves the following steps (see also the [page on tr
 !listing 3dFracture/fracture_only_aperture_changing.i block=heat_transfer_coefficient_auxk
 
 These steps could be performed during the simulation initialization, however, it is more convenient to perform them at each time-step.  When these steps have been accomplished, each time-step involves the following (which is also used in the sections above).
+(FIXME  how important do you think the order of execution is.  In the setup you have, I'm pretty sure the sub-app is executed first execute_on=timestep_begin by default.  and then the matrix is executed.  This means the fracture at time=tn will have matrix properties from time=tn but the during the matrix step for matrix time=tn will use fracture properties from t=tn+1.  This probably doesn't matter but with staggered time stepping in fluid structure interaction, I think getting this order wrong will lead to instabilites.  What we are doing is kind of neat because in fsi, this staggered timestepping is supposed to be 2nd order accurate when compared to the monolithic result but in FSI if the fluid and structure are stepped forward at the same time, you get only first order accuracy.  I also see you are using iterationAdaptive timestepping in the executioner with substepping in the multiapp... I wonder how many fracture subapp steps are taken per step on the matrix master app.  There is also the interpolate_transfers option to linearly interpolate values from the master app to each substep on the fracture app.)
 
 1. The matrix temperature, `matrix_T`, is sent to the fracture nodes using a [MultiAppInterpolationTransfer](MultiAppInterpolationTransfer.md) Transfer.
 2. The fracture physics is solved.
@@ -321,4 +330,3 @@ This page has described a sample model and workflow for simulating mixed-dimensi
 - [table:time_scales] and the results make it clear that large matrix elements result in "short"-time inaccuracies.  It is therefore tempting to refine the matrix mesh around the fracture network.  As described in the [transfers page](multiapp_fracture_flow_transfers.md), it might be advantageous to use different Transfers if the relative mesh sizes are altered.  In the case where matrix elements are smaller than fracture elements, only those few matrix elements that contain fracture nodes will receive heat energy from the fracture system, while only those that lie at the centroid of a fracture element contribute to the aperture calculation.
 
 - The injection and production pumps have been modelled in a very simplistic way, and they only act on the fracture system.  It would be relatively straightforward to use different pumping strategies.
-

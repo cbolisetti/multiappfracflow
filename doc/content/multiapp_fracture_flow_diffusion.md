@@ -51,7 +51,7 @@ As described in the [mathematical background](multiapp_fracture_flow_equations.m
 \end{aligned}
 \end{equation}
 
-The two variables, $T_{f}$ and $T_{m}$, are called `frac_T` and `matrix_T` in the MOOSE input files.  Each obeys at diffusion equation, with heat transfer between the two variables, as written in the [eqn.coupled.basic].  The heat-transfer coefficient, $h$, may be written
+The two variables, $T_{f}$ and $T_{m}$, are called `frac_T` and `matrix_T` in the MOOSE input files.  Each obeys a diffusion equation, with heat transfer between the two variables, as written in the [eqn.coupled.basic].  The heat-transfer coefficient, $h$, may be written
 
 \begin{equation}
 \label{eqn.suggested.h}
