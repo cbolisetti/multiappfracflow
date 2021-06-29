@@ -54,7 +54,16 @@ The insitu fracture aperture is assumed to be $a_{0} = 0.1\,$mm for all the frac
 a = a_{0} + A(P - P_{0}) \ ,
 \end{equation}
 
+
+!alert construction title=Rob Note
+I am guessing the call to "PorousFlowPorosityLinear" below is one of the cases Andy mentioned about some links not working
+
 where $A = 10^{-3}\,$m.MPa$^{-1}$.  [eqn.frac.open] could easily be generalised to include a temperature-dependent term (which would still be modelled using [PorousFlowPorosityLinear](PorousFlowPorosityLinear.md)), or more complicated physics introduced through the use of other [PorousFlow porosity](porous_flow/porosity.md) classes.  Using $A = 10^{-3}\,$m.MPa$^{-1}$ means that a pressure increase of 1$\,$MPa dilates the fracture by 1$\,$mm.
+
+
+!alert construction title=Rob comment
+I love this functionality!  Request for Lynn of Andy (to do later)--can do try a simulation that includes TensorMechanics, and compare this with modeleded displacement?  Is there a way to generalize the displacement on the 3D mesh to changes in aperture of the fracture? Specifically, what are our options for thermal contraction of the matrix being related to dilation of fracture aperture?
+
 
 The page on [mathematics and physical interpretation](multiapp_fracture_flow_equations.md) demonstrated that the porosity in the 2D fracture simulation should be multiplied by $a$.  Assuming that the porosity of the fracture is 1, the simulation's porosity is $\phi = a$:
 
@@ -106,6 +115,11 @@ Here
 | 0.5 | 0.5 | 0.6 | $4\times 10^{-10}$ |
 | 1 | 7 | 1 | $10^{-9}$ |
 | 2 | 90 | 2 | $4\times 10^{-9}$ |
+
+
+!alert construction title=Rob observation
+In order to 50 kg/s into the FORGE reservoir, we needed \~ 6-12 MPa overpressure at the wellhead. I need to dig out the hydraulic aperture data from the FMI logs.  I want to say a =\~1e-5m at in-situ conditions before injection.
+
 
 Economically-viable flow rates are usually greater than about 10$\,$kg.s$^{-1}$, which is the amount prescribed in the MOOSE input file, below.  This means a pressure change of $\sim 1\,$MPa is expected, and apertures will be around 1$\,$mm.  Note that the porepressure around the *producer* should be around 1$\,$MPa *higher* than insitu, in order for the fluid to flow from the fracture to the production well.  If the production well reduces pressure too much, then according to [eqn.frac.open], the fracture will close in its vicinity, resulting in limited fluid production.  Therefore, the numerical model relies on the injector increasing the porepressure throughout the system (by greater than 1$\,$MPa in most places) and the producer removes excess fluid.
 
