@@ -192,7 +192,7 @@ There are numerical subtleties in these expressions that may not impact many sim
 
 ## Heat advection
 
-Heat advection follows the same principal as mass transfer.  The heat transfer by advection through the skin:
+Heat advection follows the same principle as mass transfer.  The heat transfer by advection through the skin:
 
 \begin{equation}
 Q_{\mathrm{s}} = eh_{\mathrm{s}}^{\mathrm{mass}}(\Phi_{f} - \Phi_{s}) \ .

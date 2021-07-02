@@ -83,7 +83,7 @@ Using a MultiApp approach for the $h\neq 0$ case yields similar results.  The Mu
 3. One timestep of the matrix system is solved, holding the fracture variables fixed.
 4. Transfers from the matrix system to the fracture system are performed.
 
-Upon reflection, the reader will realise there are many potential ways of actually implementing this.  In the case at hand, the fracture physics ($T_{f}$) is governed by the "main" App, and the matrix physics ($T_{m}$) by the "sub" App.
+Upon reflection, the reader will realise there are many potential ways of actually implementing this.  In the case at hand, the fracture physics ($T_{f}$) is governed by the "main" App, and the matrix physics ($T_{m}$) by the "sub" App. (FIXME: In the next page describing diffusion in mixed dimensions, the matrix is the main app and the fracture is the sub.)
 
 ### Transfer of heat energy ("heat" MultiApp)
 

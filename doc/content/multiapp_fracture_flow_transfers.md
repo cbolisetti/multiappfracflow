@@ -28,7 +28,7 @@ A [MultiAppMeshFunctionTransfer](MultiAppMeshFunctionTransfer.md) is used to tra
 
 ## MultiAppInterpolationTransfer
 
-A [MultiAppInterpolationTransfer](MultiAppInterpolationTransfer.md) may be used to transfer the matrix temperature to the fracture mesh, as shown in [interpolation_matrix_to_fracture].  Each node on the fracture mesh looks for the nearest `num_points` (3 by default) nodes on the matrix mesh, and receives a temperature value interpolated from those three temperatures.  As mentioned above, an alternate is to use a [MultiAppMeshFunctionTransfer](MultiAppMeshFunctionTransfer.md) which uses the matrix shape-function information instead, but that requires the fracture domain to be included within the matrix domain, since no extrapolation is performed.
+A [MultiAppInterpolationTransfer](MultiAppInterpolationTransfer.md) may be used to transfer the matrix temperature to the fracture mesh, as shown in [interpolation_matrix_to_fracture].  Each node on the fracture mesh looks for the nearest `num_points` (3 by default) nodes on the matrix mesh, and receives a temperature value interpolated from those three temperatures.  As mentioned above, an alternative is to use a [MultiAppMeshFunctionTransfer](MultiAppMeshFunctionTransfer.md) which uses the matrix shape-function information instead, but that requires the fracture domain to be included within the matrix domain, since no extrapolation is performed.
 
 !media media/interpolation_matrix_to_fracture.png
 	style=width:60%;margin:auto;padding-top:2.5%;
