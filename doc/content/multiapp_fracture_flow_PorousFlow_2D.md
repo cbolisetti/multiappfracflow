@@ -21,7 +21,7 @@ Consider a single 1D planar fracture within a 2D mesh.  Fluid flows along the fr
 [Kuzmin-Turek](kt.md) stabilization is used to minimise numerical diffusion.  The following assumptions are used (see [Mathematics and physical interpretation](multiapp_fracture_flow_equations.md)).
 
 - The fracture aperture is $10^{-2}\,$m, and its porosity is $1$.  Therefore, the porosity required by PorousFlow is $a\phi = 10^{-2}$.
-- The permeability is given by the $a^{2}/12$ formula ( FIXME reference [flow_through_fractured_media.md] should it be $a^2$ below), modified by a roughness coefficient, $r$, so the permeability required by PorousFlow is $a^{3}*r/12 = 10^{-8}$.
+- The permeability is given by the $a^{2}/12$ (formula)[flow_through_fractured_media.md], modified by a roughness coefficient, $r$, so the permeability required by PorousFlow (which includes the extra factor of $a$) is $a^{3}*r/12 = 10^{-8}$.
 - The fracture is basically filled with water, so the internal energy of any rock material within it may be ignored.
 - The thermal conductivity in the fracture is dominated by the water (which has thermal conductivity 0.6$\,$W.m$^{-1}$.K$^{-1}$), so the thermal conductivity required by PorousFlow is $0.6\times 10^{-2}$.
 

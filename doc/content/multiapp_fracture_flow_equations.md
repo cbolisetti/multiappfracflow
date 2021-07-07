@@ -88,7 +88,11 @@ Q_{1} &= \lambda \frac{T_{s} - T_{1}}{L_{1}} \ .
 \end{aligned}
 \end{equation}
 
-Assuming the sum of these equals $Q_{s}$, that is $Q_{s} = Q_{0} + Q_{1}$, allows $T_{s}$ to be eliminated by combining [heat.transfer.skin] and [eqn.linear.q0q1] (FIXME  Is this correct Andy?  I added that eqn 4 was used in 5 but I can't eliminate T_s.  Are there other assumptions?) and yields the heat-loss from the fracture:
+Assuming the sum of these equals $Q_{s}$, that is $Q_{s} = Q_{0} + Q_{1}$:
+\begin{equation}
+h_{\mathrm{s}}(T_{f} - T_{s}) = \lambda \left( \frac{T_{s} - T_{0}}{L_{0}} + \frac{T_{s} - T_{1}}{L_{1}}\right) \ .
+\end{equation}
+Using this equality allows $T_{s}$ to be written in terms of the other temperature values, and substituting the expression into [heat.transfer.skin] yields the heat-loss from the fracture:
 \begin{equation}
 Q = \frac{h_{\mathrm{s}}\lambda (L_{0} + L_{1})}{h_{\mathrm{s}}L_{0}L_{1} + \lambda(L_{0} + L_{1})} \left( \frac{L_{1}}{L_{0} + L_{1}}(T_{f} - T_{0}) + \frac{L_{0}}{L_{0} + L_{1}}(T_{f} - T_{1}) \right) \ .
 \end{equation}
@@ -129,7 +133,7 @@ h = \frac{2\lambda_{\mathrm{m}}^{nn}}{L + 2s/c} \rightarrow \frac{2\lambda_{\mat
 
 where the final limit is for $s \ll L$, which is likely to be reasonably correct in most simulations.
 
-Finally, notice that if $a A\gg V$, (FIXME  Which equation above gives this limit?  Is this describing fracture mesh that is much coarser than the matrix mesh?  I don't think this could happen, $a$ is so much smaller than the size of a matrix element.  This would mean the matrix element is the size of the fracture aperture) where $A$ is now the fracture area modelled by one finite-element fracture node, and $V$ is the volume modelled by one finite-element matrix node, then the single fracture node can apply a lot of heat to the "small" matrix node, which will likely cause numerical instability if $\Delta t$ is too large, in the MultiApp approach.
+Finally, consider the case which has very large fracture elements compared with matrix elements.  Then it could happen that $a A\gg V$, where $A$ is now the fracture area modelled by one finite-element fracture node, and $V$ is the volume modelled by one finite-element matrix node.  Then the single fracture node can apply a lot of heat to the "small" matrix node, which will likely cause numerical instability if $\Delta t$ is too large, in the MultiApp approach.
 
 ## Mass flow
 
@@ -147,7 +151,13 @@ Here
 - $g$ is the gravitational acceleration (SI units m.s$^{-2}$ or Pa.m$^{2}$.kg$^{-1}$);
 - $z$ is the coordinate direction pointing "upwards" (i.e. in the opposite direction to gravity) with SI units m.  If gravity acted in a different direction then $z$ would be replaced by another coordinate direction.
 
-In the Darcy setting modelled by PorousFlow, the equivalent of [heat.transfer.skin] is
+In the Darcy setting modelled by PorousFlow, the equivalent of the heat transfer $h(T_{f} - T_{m})$ found in [eqn.coupled.basic] is
+
+\begin{equation}
+Q^{\mathrm{mass}} = h^{\mathrm{mass}}(\Phi_{f} - \Phi_{m})
+\end{equation}
+
+and the equivalent of [heat.transfer.skin] is
 
 \begin{equation}
 Q_{\mathrm{s}}^{\mathrm{mass}} = h_{\mathrm{s}}^{\mathrm{mass}}(\Phi_{f} - \Phi_{s}) \ .
@@ -175,7 +185,6 @@ where $h^{\mathrm{mass}}$ depends on the matrix element surrounding the fracture
 - $L_{\mathrm{left}}$ is the average of the distances between the fracture and the nodes that lie on its left side (opposite the right side).
 
 This appears in the mass-transfer: $Q^{\mathrm{mass}} = h^{\mathrm{mass}}(\Phi_{f} - \Phi_{m})$, where $\Phi$ is given in [eqn.flow.potential].
-(FIXME Where does this equation come from where Phi_skin is replace with Phi_matrix)
 The arguments that led to [eqn.suggested.h.L] and [eqn.simple.L] lead in this case to
 
 \begin{equation}

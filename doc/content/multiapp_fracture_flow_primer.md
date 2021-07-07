@@ -59,7 +59,7 @@ The result depends on the spatial and temporal discretisation.  The temporal-dis
 !media media/diffusion_single_var.png
 	style=width:60%;margin:auto;padding-top:2.5%;
 	id=diffusion_single_var
-	caption=Decoupled case fracture Temperature: comparison of the analytical solution with the MOOSE results as computed using no MultiApp
+	caption=Decoupled case fracture temperature: comparison of the analytical solution with the MOOSE results as computed using no MultiApp
 
 ## Two coupled variables (no MultiApp)
 
@@ -72,7 +72,7 @@ The result for $T_{f}$ depends on the spatial and temporal discretisation.  The 
 !media media/diffusion_two_vars.png
 	style=width:60%;margin:auto;padding-top:2.5%;
 	id=diffusion_two_vars
-	caption=Coupled case fracture Temperature: comparison of the analytical solution with the MOOSE results as computed using no MultiApp
+	caption=Coupled case fracture temperature: comparison of the analytical solution with the MOOSE results as computed using no MultiApp
 
 ## A MultiApp approach
 
@@ -83,7 +83,7 @@ Using a MultiApp approach for the $h\neq 0$ case yields similar results.  The Mu
 3. One timestep of the matrix system is solved, holding the fracture variables fixed.
 4. Transfers from the matrix system to the fracture system are performed.
 
-Upon reflection, the reader will realise there are many potential ways of actually implementing this.  In the case at hand, the fracture physics ($T_{f}$) is governed by the "main" App, and the matrix physics ($T_{m}$) by the "sub" App. (FIXME: In the next page describing diffusion in mixed dimensions, the matrix is the main app and the fracture is the sub.)
+Upon reflection, the reader will realise there are many potential ways of actually implementing this.  In the case at hand, the fracture physics ($T_{f}$) is governed by the "main" App, and the matrix physics ($T_{m}$) by the "sub" App.  On the other hand, in the pages [describing diffusion in mixed dimensions](multiapp_fracture_flow_diffusion.md) and PorousFlow models in [2D](multiapp_fracture_flow_PorousFlow_2D.md) and [3D](multiapp_fracture_flow_PorousFlow_3D.md), the matrix physics is controlled by the main App and the fracture by the sub App.  This latter approach is probably advantageous in most situations because it easily allows the fracture App to take smaller time-steps.
 
 ### Transfer of heat energy ("heat" MultiApp)
 

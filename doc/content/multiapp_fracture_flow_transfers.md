@@ -41,11 +41,7 @@ A [MultiAppNearestNodeTransfer](MultiAppNearestNodeTransfer.md) transfers inform
 
 ### Fracture-normal directions
 
-Each matrix element looks for its closest fracture element and retrieves the normal vector from that fracture element, as in [nearestnode_fracture_to_matrix].  Matrix element distant from all fractures retrieve this information too, but that never impacts the simulation results.
-
-!alert construction title=Rob Question
-So does the entire 3d mesh do this search?  Are there performance implications for very large meshes?
-
+Each matrix element looks for its closest fracture element and retrieves the normal vector from that fracture element, as in [nearestnode_fracture_to_matrix].  Matrix element distant from all fractures retrieve this information too, but that never impacts the simulation results.  There may be performance implications for very large meshes as quite a number of searches must be performed to build the required information.
 
 !media media/nearestnode_fracture_to_matrix.png
 	style=width:60%;margin:auto;padding-top:2.5%;
