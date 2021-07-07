@@ -313,13 +313,14 @@ This page has described a sample model and workflow for simulating mixed-dimensi
 
 - It is likely that the aperture is temperature-dependent, since when the cooled matrix contracts, the fracture will dilate.  This effect (if linear) can easily be modelled using [PorousFlowPorosityLinear](PorousFlowPorosityLinear.md).
 
-- No mechanical effects have been included, except via [eqn.frac.open].  A different approach would be to treat the matrix as a THM system, transferring the fracture porepressure as an "external" normal stress, $\sigma_{nn}$, applied in matrix elements containing the fracture.  This could be applied as [VectorPostprocessorPointSources](VectorPostprocessorPointSource.md).  The matrix deforms in response, and the normal component of the strain, $\epsilon_{nn}$, could be interpreted as an aperture changed, and transferred back to the fracture.  This approach contains a few subtleties:
+- No mechanical effects have been included, except via [eqn.frac.open].  A different approach would be to treat the matrix as a THM system, transferring the fracture porepressure as an "external" normal stress, $\sigma_{nn}$, applied in matrix elements containing the fracture.  This could be applied as [VectorPostprocessorPointSources](VectorPostprocessorPointSource.md).  The matrix deforms in response to this as well as changes in matrix temperature, and the normal component of the strain, $\epsilon_{nn}$, could be interpreted as an aperture changed, and transferred back to the fracture.  This approach contains a few subtleties:
 
   - Is matrix strain a good measure of fracture opening?
-  - Fracture porepressure is a nodal quantity, so for non-planar fractures the normal direction is undefined.
+  - The matrix element containing the fracture probably needs to be prescribed a modified stiffness, to ensure it adequately models a "fractured element"
+  - Fracture porepressure is a nodal quantity, so for non-planar fractures the normal direction is undefined, so creating an elemental representation of porepressure might be advantageous
   - Careful consideration of fracture area contained by a matrix element might be advantageous.
   - Attributing strain in cases where a single matrix element contains multiple fracture elements might be complicated
-  - If fracture elements are huge compared with matrix elements, only the matrix element that happens to contain a fracture node will experience the additional $\sigma_{nn}$, while only the matrix element that lies nearest the fracture centroid will provide $\epsilon_{nn}$.
+  - If fracture elements are huge compared with matrix elements, only the matrix element that happens to contain a fracture node (or element centroid if using elemental porepressure) will experience the additional $\sigma_{nn}$, while only the matrix element that lies nearest the fracture centroid will provide $\epsilon_{nn}$.
 
 - An alternate way of directly including mechanics could be to use the XFEM module and explicitly break matrix elements when they contain fracture elements.  The advantage over the previous approach is that it's easy to attribute strain to fracture dilation, but the disadvantage is the complexity of this approach.
 
