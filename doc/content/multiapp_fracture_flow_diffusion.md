@@ -58,8 +58,6 @@ The two variables, $T_{f}$ and $T_{m}$, are called `frac_T` and `matrix_T` in th
 h = \frac{h_{\mathrm{s}}\lambda_{\mathrm{m}}^{nn} (L_{\mathrm{right}} + L_{\mathrm{left}})}{h_{\mathrm{s}}L_{\mathrm{right}}L_{\mathrm{left}} + \lambda_{\mathrm{m}}^{nn}(L_{\mathrm{right}} + L_{\mathrm{left}})} \ ,
 \end{equation}
 
-
-
 When using a MultiApp, the fracture appears as a set of Dirac sources in the matrix subdomain:
 
 \begin{equation}

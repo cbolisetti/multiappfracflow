@@ -337,3 +337,12 @@ This page has described a sample model and workflow for simulating mixed-dimensi
 - [table:time_scales] and the results make it clear that large matrix elements result in "short"-time inaccuracies.  It is therefore tempting to refine the matrix mesh around the fracture network.  As described in the [transfers page](multiapp_fracture_flow_transfers.md), it might be advantageous to use different Transfers if the relative mesh sizes are altered.  In the case where matrix elements are smaller than fracture elements, only those few matrix elements that contain fracture nodes will receive heat energy from the fracture system, while only those that lie at the centroid of a fracture element contribute to the aperture calculation.
 
 - The injection and production pumps have been modelled in a very simplistic way, and they only act on the fracture system.  It would be relatively straightforward to use different pumping strategies.
+
+TODO: we typically take 3-5 fracture timesteps in a single matrix step in this particular situation.  In other models the number will be quite different, but just in this model the fracture and matrix are both approaching steady-state at a similar rate
+
+TODO: I wonder whether interpolate transfers would make much difference – probably not in this example, but worth mentioning that option in the doco, I think.
+
+TODO: Kuzmin-Turek
+
+TODO: stress that the operator split breaks the unconditional stability
+

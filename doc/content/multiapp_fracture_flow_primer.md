@@ -132,7 +132,7 @@ along with the following Transfers:
 
 and the `Kernel` in the matrix App:
 
-!listing diffusion_multiapp/fracture_app_heat.i start=[toMatrix] end=[]
+!listing diffusion_multiapp/matrix_app.i start=[fromFrac] end=[]
 
 The results are shown in [fracture_app].
 
